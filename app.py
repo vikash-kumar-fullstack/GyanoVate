@@ -18,7 +18,7 @@
 
 # # SCHOOL_LOCATION = (25.568410,84.150744)
 # SCHOOL_LOCATION=(25.569626000000003, 84.145121)
-# MIN_DISTANCE_METERS = 50000000000
+# MIN_DISTANCE_METERS = 500
 # MAX_FACE_DISTANCE = 0.6
 
 # # Global variables
@@ -32,7 +32,7 @@
 # # MongoDB connection
 # # MongoDB connection - FIXED VERSION
 # try:
-#     client = MongoClient('mongodb+srv://vedant:vedant@cluster0.kdram3w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+#     client = MongoClient('mongodb+srv://nisant54321_db_user:lPwQbLf5igvdrSEb@cluster0.krcxaus.mongodb.net/?appName=Cluster0')
 #     # Test the connection
 #     client.admin.command('ping')
 #     db = client['test']  # Use explicit database name with brackets
@@ -486,7 +486,7 @@ CORS(app)
 # ---------- Config ----------
 
 # Exact coordinates of the school
-SCHOOL_LOCATION = (25.568261, 84.150563)
+SCHOOL_LOCATION = (23.730782,92.717353)
 
 # Range in meters (Strict 500m)
 MIN_DISTANCE_METERS = 500 
@@ -502,7 +502,7 @@ verification_start_time = None
 
 # ---------- MongoDB Connection ----------
 try:
-    client = MongoClient('mongodb+srv://vedant:vedant@cluster0.kdram3w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+    client = MongoClient('mongodb+srv://nisant54321_db_user:lPwQbLf5igvdrSEb@cluster0.krcxaus.mongodb.net/?appName=Cluster0')
     # Test the connection
     client.admin.command('ping')
     db = client['test']
@@ -601,7 +601,13 @@ def mark_attendance_direct_in_db(email, face_matched, location_matched):
             )
             action = "created"
 
-        if result.modified_count > 0 or (result.matched_count > 0 and action == "updated"):
+        # if result.modified_count > 0 or (result.matched_count > 0 and action == "updated"):
+        #     return True, action
+        # else:
+        #     return False, "no_changes"
+        
+        # Always treat matched_count >= 1 as success
+        if result.matched_count > 0:
             return True, action
         else:
             return False, "no_changes"
