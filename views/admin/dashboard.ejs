@@ -1,141 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <h1>Admin Dashboard</h1>
-        
-        <% if (typeof message !== 'undefined') { %>
-            <div class="alert alert-success">
-                <%= message %>
-            </div>
-        <% } %>
-
-        <!-- Statistics -->
-        <div class="dashboard-grid">
-            <div class="feature-card">
-                <h3>📊 Total Lectures</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: #007bff;">
-                    <%= lectures.length %>
-                </p>
-            </div>
-            <div class="feature-card">
-                <h3>👨‍🏫 Active Teachers</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: #28a745;">
-                    <%= teachers.length %>
-                </p>
-            </div>
-            <div class="feature-card">
-                <h3>📅 Today's Lectures</h3>
-                <p style="font-size: 2rem; font-weight: bold; color: #ffc107;">
-                    <%= todaysLectures.length %>
-                </p>
-            </div>
-        </div>
-
-        <!-- Today's Lectures -->
-        <div class="form-container">
-            <h2>Today's Lectures (<%= new Date().toLocaleDateString() %>)</h2>
-            
-            <% if (todaysLectures.length > 0) { %>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Teacher</th>
-                            <th>Subject</th>
-                            <th>Class</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% todaysLectures.forEach(lecture => { %>
-                            <tr>
-                                <td><%= lecture.title %></td>
-                                <td><%= lecture.teacher.name %></td>
-                                <td><%= lecture.subject %></td>
-                                <td><%= lecture.class %></td>
-                                <td><%= lecture.schedule.startTime %> - <%= lecture.schedule.endTime %></td>
-                                <td>
-                                    <span class="status status-<%= lecture.status %>">
-                                        <%= lecture.status.toUpperCase() %>
-                                    </span>
-                                </td>
-                                <td>
-                                    <% if (lecture.status === 'analyzed') { %>
-                                        <a href="#" class="btn btn-primary btn-sm">View Analysis</a>
-                                    <% } %>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p>No lectures scheduled for today.</p>
-            <% } %>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="form-container">
-            <h2>Admin Actions</h2>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <a href="/admin/create-lecture" class="btn btn-success">Create New Lecture</a>
-                <a href="/admin/schedules" class="btn btn-primary">Manage Schedules</a>
-                <a href="/admin/teachers" class="btn btn-primary">Manage Teachers</a>
-            </div>
-        </div>
-
-        <!-- Recent Lectures -->
-        <div class="form-container">
-            <h2>Recent Lectures</h2>
-            <% if (lectures.length > 0) { %>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Teacher</th>
-                            <th>Date</th>
-                            <th>Match %</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% lectures.slice(0, 10).forEach(lecture => { %>
-                            <tr>
-                                <td><%= lecture.title %></td>
-                                <td><%= lecture.teacher.name %></td>
-                                <td><%= lecture.date.toLocaleDateString() %></td>
-                                <td>
-                                    <% if (lecture.analysis.transcriptMatchPercentage) { %>
-                                        <%= lecture.analysis.transcriptMatchPercentage %>%
-                                    <% } else { %>
-                                        -
-                                    <% } %>
-                                </td>
-                                <td>
-                                    <span class="status status-<%= lecture.status %>">
-                                        <%= lecture.status.toUpperCase() %>
-                                    </span>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p>No lectures found.</p>
-            <% } %>
-        </div>
-    </div>
-
-    <%- include('../partials/footer') %>
-</body>
-</html>
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Admin Dashboard</h1>
+<div class="stats">
+    <div class="stat-card">Total Lectures: <%= lectures.length %></div>
+    <div class="stat-card">Teachers: <%= teachers.length %></div>
+    <div class="stat-card">Today's Lectures: <%= todaysLectures.length %></div>
+</div>
+<div class="admin-actions">
+    <a href="/admin/create-lecture" class="btn">+ New Lecture</a>
+    <a href="/admin/schedules" class="btn">Manage Schedules</a>
+    <a href="/admin/teachers" class="btn">Manage Teachers</a>
+</div>
+<h2>Recent Lectures</h2>
+<table class="data-table">
+    <thead><tr><th>Title</th><th>Teacher</th><th>Class</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>
+        <% lectures.forEach(l => { %>
+        <tr>
+            <td><%= l.title %></td>
+            <td><%= l.teacherId ? l.teacherId.name : 'N/A' %></td>
+            <td><%= l.classNum %></td>
+            <td><%= l.date.toDateString() %></td>
+            <td><%= l.status %></td>
+        </tr>
+        <% }); %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

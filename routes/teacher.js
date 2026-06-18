@@ -1,446 +1,233 @@
 const express = require('express');
-const { requireAuth, attachTeacherInfo } = require('../middleware/auth');
+const { requireRole } = require('../middleware/auth');
+
 const Lecture = require('../models/Lecture');
+const User = require('../models/User');
+const School = require('../models/School');
 const router = express.Router();
-const Teacher = require('../models/Teacher'); 
+router.use(requireRole('teacher'));
+const fs = require('fs');
+const { exec } = require('child_process');
+const path = require('path');
+const cloudinary = require('../config/cloudinary');
+const mongoose = require('mongoose');
 
-router.use(requireAuth);
-router.use(attachTeacherInfo);
 
-// Teacher dashboard
+
+
+// ✅ DASHBOARD
 router.get('/dashboard', async (req, res) => {
-    try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = new Date();
+    today.setHours(0,0,0,0);
 
-        const lectures = await Lecture.find({
-            teacher: req.session.teacherId,
-            date: {
-                $gte: today,
-                $lt: tomorrow
-            }
-        }).sort({ 'schedule.startTime': 1 });
-
-        const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5);
-        
-        // Find current or next lecture
-        let currentLecture = null;
-        for (const lecture of lectures) {
-            const canRecord = currentTime >= lecture.schedule.startTime && 
-                            currentTime <= lecture.schedule.endTime;
-            if (lecture.status === 'recording' || canRecord) {
-                currentLecture = lecture;
-                break;
-            }
+    const lectures = await Lecture.find({
+        teacherId: req.user._id,
+        date: {
+            $gte: today,
+            $lt: new Date(today.getTime() + 86400000)
         }
+    }).sort({ startTime: 1 });
 
-        res.render('teacher/dashboard', { 
-            lectures, 
-            currentLecture,
-            currentTime,
-            title: 'Teacher Dashboard',
-            message: req.query.message
-        });
-    } catch (error) {
-        console.error('Dashboard error:', error);
-        res.render('error', { error: 'Error loading dashboard' });
-    }
+    const currentTime = new Date().toTimeString().slice(0,5);
+
+    const currentLecture = lectures.find(
+        l => currentTime >= l.startTime && currentTime <= l.endTime
+    );
+
+    res.render('teacher/dashboard', {
+        lectures,
+        currentLecture,
+        teacher: req.user,
+        title: 'Dashboard'
+    });
 });
 
-// Recording page
+
+// ✅ RECORDING PAGE
 router.get('/recording/:lectureId', async (req, res) => {
-    try {
-        const lecture = await Lecture.findOne({
-            _id: req.params.lectureId,
-            teacher: req.session.teacherId
-        }).populate('teacher');
+    const lecture = await Lecture.findOne({
+        _id: req.params.lectureId,
+        teacherId: req.user._id
+    });
 
-        if (!lecture) {
-            return res.status(404).render('error', { error: 'Lecture not found' });
-        }
+    if (!lecture) return res.status(404).render('error', { error: 'Lecture not found' });
 
-        const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5);
-        const canRecord = currentTime >= lecture.schedule.startTime && 
-                        currentTime <= lecture.schedule.endTime;
-
-        if (!canRecord && lecture.status !== 'recording') {
-            return res.render('error', { 
-                error: 'Recording is not available at this time. Scheduled time: ' + 
-                       lecture.schedule.startTime + ' - ' + lecture.schedule.endTime
-            });
-        }
-
-        res.render('teacher/recording', { 
-            lecture, 
-            title: `Record - ${lecture.title}` 
-        });
-    } catch (error) {
-        console.error('Recording page error:', error);
-        res.render('error', { error: 'Error loading recording page' });
-    }
+    res.render('teacher/recording', { lecture });
 });
 
-// Lecture history
+
+// ✅ LECTURES LIST
 router.get('/lectures', async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = 10;
-        const skip = (page - 1) * limit;
+    const lectures = await Lecture.find({
+        teacherId: req.user._id
+    }).sort({ date: -1 });
 
-        const lectures = await Lecture.find({ teacher: req.session.teacherId })
-            .sort({ date: -1, 'schedule.startTime': -1 })
-            .skip(skip)
-            .limit(limit);
-
-        const total = await Lecture.countDocuments({ teacher: req.session.teacherId });
-        const totalPages = Math.ceil(total / limit);
-
-        res.render('teacher/lectures', { 
-            lectures, 
-            currentPage: page,
-            totalPages,
-            title: 'My Lectures' 
-        });
-    } catch (error) {
-        console.error('Lectures list error:', error);
-        res.render('error', { error: 'Error loading lectures' });
-    }
-});
-
-// Lecture details
-router.get('/lectures/:lectureId', async (req, res) => {
-    try {
-        const lecture = await Lecture.findOne({
-            _id: req.params.lectureId,
-            teacher: req.session.teacherId
-        }).populate('teacher');
-
-        if (!lecture) {
-            return res.status(404).render('error', { error: 'Lecture not found' });
-        }
-
-        res.render('teacher/lecture-details', { 
-            lecture, 
-            title: `Lecture Details - ${lecture.title}` 
-        });
-    } catch (error) {
-        console.error('Lecture details error:', error);
-        res.render('error', { error: 'Error loading lecture details' });
-    }
+    res.render('teacher/lectures', { lectures });
 });
 
 
-router.get("/markAttendance", (req, res) => {
-    if (!req.teacher) return res.redirect("/auth/login"); // <-- use req.teacher
-    res.render("teacher/markAttendance", { teacher: req.teacher, title: "Mark Attendance" });
+// ✅ LECTURE DETAILS
+router.get('/lectures/:id', async (req, res) => {
+    const lecture = await Lecture.findOne({
+        _id: req.params.id,
+        teacherId: req.user._id
+    });
+
+    if (!lecture) return res.status(404).render('error', { error: 'Lecture not found' });
+
+    res.render('teacher/lecture-details', { lecture });
+});
+
+module.exports = router;
+router.get('/markAttendance', (req, res) => {
+    res.render('teacher/markAttendance', { teacher: req.user, title: 'Mark Attendance' });
 });
 
 
-// Save attendance (called by Flask after verification)
+const Teacher = mongoose.model('teacher');
 
-
-
-router.post('/mark-attendance', async (req, res) => {
+router.post('/mark-student-attendance', async (req, res) => {
     try {
-        // ✅ Check API Key in headers
-        const apiKey = req.headers['x-api-key'];
-        if (!apiKey || apiKey !== "my-secret-key") {
-            return res.status(401).json({
-                success: false,
-                message: "Unauthorized - Invalid API Key"
-            });
-        }
-
-        const { email, date, time, faceMatched, locationMatched, verified } = req.body;
-
-        console.log('📝 Received attendance data:', req.body);
-
-        // Validate required fields
-        if (!email || !date || !time) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email, date, and time are required'
-            });
-        }
-
-        // Find teacher by email
-        const teacher = await Teacher.findOne({ email });
-        if (!teacher) {
-            return res.status(404).json({
-                success: false,
-                message: 'Teacher not found'
-            });
-        }
-
-        console.log(`👨‍🏫 Found teacher: ${teacher.name}`);
-
-        // Check if attendance already marked for today
-        const today = date; // YYYY-MM-DD format
-        const existingAttendanceIndex = teacher.attendance.findIndex(record =>
-            record.date === today
-        );
-
-        console.log(`📅 Existing attendance index: ${existingAttendanceIndex}`);
-
-        let action = 'created';
-        let attendanceRecord;
-
-        if (existingAttendanceIndex !== -1) {
-            // Update existing attendance record
-            teacher.attendance[existingAttendanceIndex] = {
-                date: date,
-                time: time,
-                faceMatched: faceMatched !== undefined ? faceMatched : false,
-                locationMatched: locationMatched !== undefined ? locationMatched : false,
-                verified: verified !== undefined ? verified : (faceMatched && locationMatched)
-            };
-            action = 'updated';
-            attendanceRecord = teacher.attendance[existingAttendanceIndex];
-        } else {
-            // Add new attendance record
-            attendanceRecord = {
-                date: date,
-                time: time,
-                faceMatched: faceMatched !== undefined ? faceMatched : false,
-                locationMatched: locationMatched !== undefined ? locationMatched : false,
-                verified: verified !== undefined ? verified : (faceMatched && locationMatched)
-            };
-            teacher.attendance.push(attendanceRecord);
-        }
-
-        console.log(`💾 Saving attendance record:`, attendanceRecord);
-
-        // Save teacher doc
-        await teacher.save();
-
-        console.log(`✅ Attendance ${action} for teacher: ${teacher.name}`);
-        console.log(`📊 Total attendance records: ${teacher.attendance.length}`);
-
-        res.json({
-            success: true,
-            message: `Attendance ${action} successfully`,
-            data: {
-                teacher: teacher.name,
-                email: teacher.email,
-                date: date,
-                time: time,
-                faceMatched: attendanceRecord.faceMatched,
-                locationMatched: attendanceRecord.locationMatched,
-                verified: attendanceRecord.verified,
-                action: action
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ Error marking attendance:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        });
-    }
-});
-
-
-// Check today's attendance status
-// Check today's attendance status
-// router.get('/attendance-status', async (req, res) => {
-//     try {
-//         const { email } = req.query;
-        
-//         if (!email) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Email is required'
-//             });
-//         }
-
-//         console.log(`🔍 Checking attendance status for: ${email}`);
-
-//         const teacher = await Teacher.findOne({ email });
-//         if (!teacher) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: 'Teacher not found'
-//             });
-//         }
-
-//         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-//         console.log(`📅 Today's date: ${today}`);
-        
-//         const todayAttendance = teacher.attendance.find(record => record.date === today);
-
-//         console.log(`📊 Today's attendance found:`, todayAttendance);
-//         console.log(`📋 Total attendance records: ${teacher.attendance.length}`);
-
-//         res.json({
-//             success: true,
-//             data: {
-//                 attendanceMarked: !!todayAttendance,
-//                 attendance: todayAttendance || null
-//             }
-//         });
-
-//     } catch (error) {
-//         console.error('❌ Error checking attendance status:', error);
-//         res.status(500).json({
-//             success: false,
-//             message: 'Internal server error',
-//             error: error.message
-//         });
-//     }
-// });
-
-// Fix the attendance-status route in your Express app
-// Fix the attendance-status route in your Express app
-router.get('/attendance-status', async (req, res) => {
-    try {
-        const { email } = req.query;
-        
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email is required'
-            });
-        }
-
-        console.log(`🔍 Checking attendance status for: ${email}`);
+        const { email } = req.body;
 
         const teacher = await Teacher.findOne({ email });
+
         if (!teacher) {
-            return res.status(404).json({
-                success: false,
-                message: 'Teacher not found'
-            });
+            return res.status(404).json({ message: "Teacher not found" });
         }
 
-        // Get both UTC and local dates to handle timezone differences
-        const now = new Date();
-        const todayUTC = now.toISOString().split('T')[0]; // UTC date (what Flask uses)
-        const todayLocal = now.toLocaleDateString('en-CA'); // Local date YYYY-MM-DD
-        
-        console.log(`📅 Today's date - UTC: ${todayUTC}, Local: ${todayLocal}`);
-        console.log(`📋 Total attendance records: ${teacher.attendance.length}`);
-        
-        // Debug: log all attendance records
-        console.log('📊 All attendance records:', teacher.attendance);
+        const today = new Date().toISOString().split('T')[0];
 
-        // Check for attendance with both UTC and local dates
-        let todayAttendance = teacher.attendance.find(record => record.date === todayUTC);
-        
-        // If not found with UTC date, try local date
-        if (!todayAttendance) {
-            todayAttendance = teacher.attendance.find(record => record.date === todayLocal);
-            if (todayAttendance) {
-                console.log('🔄 Found attendance using local date instead of UTC');
-            }
-        }
+        const already = teacher.studentAttendance.some(a => a.date === today);
 
-        console.log(`🎯 Today's attendance found:`, todayAttendance);
-
-        res.json({
-            success: true,
-            data: {
-                attendanceMarked: !!todayAttendance,
-                attendance: todayAttendance || null
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ Error checking attendance status:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        });
-    }
-});
-
-// Get all attendance records for a teacher
-// Get all attendance records for a teacher
-router.get('/attendance-history', async (req, res) => {
-    try {
-        const { email } = req.query;
-        
-        if (!email) {
+        if (already) {
             return res.status(400).json({
-                success: false,
-                message: 'Email is required'
+                message: "Already marked today"
             });
         }
 
-        const teacher = await Teacher.findOne({ email }).select('name email attendance');
-        if (!teacher) {
-            return res.status(404).json({
-                success: false,
-                message: 'Teacher not found'
-            });
-        }
+        const pyRes = await fetch('http://localhost:5002/capture_students');
+        const data = await pyRes.json();
 
-        // Sort attendance by date (newest first)
-        const sortedAttendance = teacher.attendance.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        res.json({
-            success: true,
-            data: {
-                teacher: teacher.name,
-                email: teacher.email,
-                attendance: sortedAttendance
-            }
-        });
-
-    } catch (error) {
-        console.error('Error fetching attendance history:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        });
-    }
-});
-
-// Debug route to check database storage
-router.get('/debug/:lectureId', async (req, res) => {
-    try {
-        const lecture = await Lecture.findOne({
-            _id: req.params.lectureId,
-            teacher: req.session.teacherId
-        });
-        
-        if (!lecture) {
-            return res.json({ error: 'Lecture not found' });
-        }
-
-        res.json({
-            lecture: {
-                title: lecture.title,
-                youtubeTranscript: {
-                    exists: !!lecture.youtubeVideo?.transcript,
-                    length: lecture.youtubeVideo?.transcript?.length || 0,
-                    generated: lecture.youtubeVideo?.transcriptGenerated || false,
-                    generatedAt: lecture.youtubeVideo?.transcriptGeneratedAt
-                },
-                recordingTranscript: {
-                    exists: !!lecture.recording?.transcript,
-                    length: lecture.recording?.transcript?.length || 0,
-                    wordCount: lecture.recording?.wordCount || 0,
-                    generatedAt: lecture.recording?.transcriptGeneratedAt
-                },
-                analysis: {
-                    matchPercentage: lecture.analysis?.transcriptMatchPercentage,
-                    humanVoiceProbability: lecture.analysis?.humanVoiceProbability,
-                    status: lecture.analysis?.status,
-                    analyzedAt: lecture.analysis?.analyzedAt
+        await Teacher.updateOne(
+            { email },
+            {
+                $push: {
+                    studentAttendance: {
+                        date: today,
+                        time: new Date().toLocaleTimeString(),
+                        studentCount: data.studentCount,
+                        imageUrl: data.imagePath,
+                        locationMatched: true
+                    }
                 }
             }
+        );
+
+        res.json({
+            message: "Saved successfully",
+            data
         });
 
-    } catch (error) {
-        res.json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
+router.get('/attendance-status', async (req, res) => {
+    const { email } = req.query;
+    const teacher = await User.findOne({ email, role: 'teacher' });
+    const today = new Date().toISOString().split('T')[0];
+    const todayAttendance = teacher?.attendance?.find(a => a.date === today);
+    res.json({ success: true, data: { attendanceMarked: !!todayAttendance, attendance: todayAttendance || null } });
+});
+
+router.get('/student-attendance-status', async (req, res) => {
+    const { email } = req.query;
+    const teacher = await User.findOne({ email, role: 'teacher' });
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecord = teacher?.studentAttendance?.find(sa => sa.date === today);
+    res.json({ success: true, data: { marked: !!todayRecord } });
+});
+
+router.post('/check-location', async (req, res) => {
+    const { latitude, longitude, email } = req.body;
+    const teacher = await User.findOne({ email, role: 'teacher' });
+    if (!teacher || !teacher.schoolId) return res.json({ withinRange: false, distance: null });
+    const school = await School.findById(teacher.schoolId);
+    if (!school || !school.latitude || !school.longitude) return res.json({ withinRange: false, distance: null });
+    const distance = getDistanceFromLatLonInMeters(latitude, longitude, school.latitude, school.longitude);
+    res.json({ withinRange: distance <= 500, distance: Math.round(distance) });
+});
+
+router.post('/capture-classroom', async (req, res) => {
+    try {
+        const teacher = req.user;
+        const today = new Date().toISOString().split('T')[0];
+        const already = teacher.studentAttendance?.some(sa => sa.date === today);
+        if (already) return res.json({ success: false, error: "Already recorded today" });
+        const pythonScript = path.join(__dirname, '../python/capture_and_count.py');
+        const output = await new Promise((resolve, reject) => {
+            exec(`python "${pythonScript}"`, (err, stdout, stderr) => {
+                if (err) reject(err);
+                else resolve(stdout);
+            });
+        });
+        const match = output.match(/STUDENTS_COUNT: (\d+)/);
+        const studentCount = match ? parseInt(match[1]) : 0;
+        const imagePath = path.join(__dirname, '../python/captures/latest.jpg');
+        if (!fs.existsSync(imagePath)) throw new Error("Image not captured");
+        const uploadResult = await cloudinary.uploader.upload(imagePath, { folder: 'student_attendance' });
+        fs.unlinkSync(imagePath);
+        const now = new Date();
+        teacher.studentAttendance.push({
+            date: today,
+            time: now.toTimeString().slice(0,5),
+            imageUrl: uploadResult.secure_url,
+            studentCount: studentCount,
+            locationMatched: true,
+            cloudinaryId: uploadResult.public_id
+        });
+        await teacher.save();
+        res.json({ success: true, studentCount, imageUrl: uploadResult.secure_url });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Teacher reports
+router.get('/reports/attendance', async (req, res) => {
+    const { startDate, endDate } = req.query;
+    let attendance = req.user.attendance || [];
+    if (startDate) attendance = attendance.filter(a => a.date >= startDate);
+    if (endDate) attendance = attendance.filter(a => a.date <= endDate);
+    res.render('teacher/attendance-report', { attendance, startDate, endDate, teacher: req.user, title: 'My Attendance' });
+});
+
+router.get('/reports/lectures', async (req, res) => {
+    const { startDate, endDate } = req.query;
+    let lectureFilter = { teacherId: req.user._id };
+    if (startDate) lectureFilter.date = { $gte: new Date(startDate) };
+    if (endDate) lectureFilter.date = { ...lectureFilter.date, $lte: new Date(endDate) };
+    const lectures = await Lecture.find(lectureFilter).sort({ date: -1 });
+    res.render('teacher/lecture-report', { lectures, startDate, endDate, teacher: req.user, title: 'My Lecture Analysis' });
+});
+
+router.get('/reports/student-count', async (req, res) => {
+    const { startDate, endDate } = req.query;
+    let records = req.user.studentAttendance || [];
+    if (startDate) records = records.filter(sa => sa.date >= startDate);
+    if (endDate) records = records.filter(sa => sa.date <= endDate);
+    res.render('teacher/student-count-report', { records, startDate, endDate, teacher: req.user, title: 'Student Count Reports' });
+});
+
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
 
 module.exports = router;

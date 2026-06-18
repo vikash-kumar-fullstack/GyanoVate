@@ -1,39 +1,28 @@
-const Teacher = require('../models/Teacher');
+const User = require('../models/User');
 
 const requireAuth = (req, res, next) => {
-    if (!req.session.teacherId) {
-        return res.redirect('/auth/login');
-    }
+    if (!req.session.userId) return res.redirect('/auth/login');
     next();
 };
 
-const requireAdmin = async (req, res, next) => {
-    try {
-        const teacher = await Teacher.findById(req.session.teacherId);
-        if (!teacher || teacher.role !== 'admin') {
-            return res.status(403).render('error', { error: 'Admin access required' });
+const requireRole = (...roles) => {
+    return async (req, res, next) => {
+        if (!req.session.userId) return res.redirect('/auth/login');
+        const user = await User.findById(req.session.userId);
+        if (!user || !roles.includes(user.role)) {
+            return res.status(403).render('error', { error: 'Access denied' });
         }
-        req.teacher = teacher;
+        req.user = user;
         next();
-    } catch (error) {
-        res.redirect('/auth/login');
-    }
+    };
 };
 
-const attachTeacherInfo = async (req, res, next) => {
-    if (req.session.teacherId) {
-        try {
-            const teacher = await Teacher.findById(req.session.teacherId);
-            if (teacher) {
-                req.teacher = teacher;
-                res.locals.teacher = teacher;
-                res.locals.teacherRole = teacher.role;
-            }
-        } catch (error) {
-            console.error('Error attaching teacher info:', error);
-        }
+const attachUser = async (req, res, next) => {
+    if (req.session.userId) {
+        const user = await User.findById(req.session.userId);
+        if (user) { req.user = user; res.locals.user = user; res.locals.userRole = user.role; }
     }
     next();
 };
 
-module.exports = { requireAuth, requireAdmin, attachTeacherInfo };
+module.exports = { requireAuth, requireRole, attachUser };

@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Create Lecture for <%= school.name %></h1>
+
+<form action="/principal/lectures/create" method="post">
+    <div class="form-group"><label>Title</label><input type="text" name="title" required></div>
+    <div class="form-group"><label>Teacher</label><select name="teacherId" required>
+        <option value="">Select teacher</option>
+        <% teachers.forEach(t => { %><option value="<%= t._id %>"><%= t.name %></option><% }); %>
+    </select></div>
+    <div class="form-group"><label>Subject</label><select name="subject" id="subjectSelect" required>
+        <option value="">Select subject</option>
+        <% subjects.forEach(s => { %><option value="<%= s %>"><%= s %></option><% }); %>
+    </select></div>
+    <div class="form-group"><label>Topic</label><select name="topic" id="topicSelect" required disabled>
+        <option value="">First select a subject</option>
+    </select></div>
+    <div class="form-group"><label>Class (1-10)</label><input type="number" name="classNum" min="1" max="10" required></div>
+    <div class="form-group"><label>Date</label><input type="date" name="date" required></div>
+    <div class="form-group"><label>Start Time</label><input type="time" name="startTime" required></div>
+    <div class="form-group"><label>End Time</label><input type="time" name="endTime" required></div>
+    <div class="form-group"><label>YouTube URL (optional)</label><input type="url" name="youtubeUrl"></div>
+    <div class="form-group"><label>Reference Transcript (optional)</label><textarea name="referenceTranscript" rows="4"></textarea></div>
+    <button type="submit" class="btn">Create Lecture</button>
+</form>
+<script>
+    const topicsBySubject = <%- JSON.stringify(topics) %>;
+    const subjectSelect = document.getElementById('subjectSelect');
+    const topicSelect = document.getElementById('topicSelect');
+    subjectSelect.addEventListener('change', () => {
+        const subject = subjectSelect.value;
+        if (subject && topicsBySubject[subject]) {
+            topicSelect.disabled = false;
+            topicSelect.innerHTML = '<option value="">Select topic</option>' + topicsBySubject[subject].map(t => `<option value="${t}">${t}</option>`).join('');
+        } else {
+            topicSelect.disabled = true;
+            topicSelect.innerHTML = '<option value="">First select a subject</option>';
+        }
+    });
+</script>
+<%- include('../partials/footer') %>

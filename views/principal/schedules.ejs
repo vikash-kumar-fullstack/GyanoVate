@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Class Schedules</h1>
+<a href="/principal/schedules/new" class="btn">+ New Schedule</a>
+<table class="data-table">
+    <thead><tr><th>Teacher</th><th>Class</th><th>Subject</th><th>Day</th><th>Time</th></tr></thead>
+    <tbody>
+        <% schedules.forEach(s => { %>
+        <tr>
+            <td><%= s.teacherId ? s.teacherId.name : 'N/A' %></td>
+            <td><%= s.classNum %></td>
+            <td><%= s.subject %></td>
+            <td><%= s.day %></td>
+            <td><%= s.startTime %> - <%= s.endTime %></td>
+        </tr>
+        <% }); %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

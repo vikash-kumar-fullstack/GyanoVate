@@ -16,7 +16,7 @@
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",
     "connect-flash": "^0.1.1",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.4.1",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
@@ -26,12 +26,14 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.2.1",
+    "node-fetch": "^3.3.2",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "ws": "^8.18.3",
     "youtube-transcript": "^1.2.1",
     "youtube-transcript-api": "^3.0.6",
-    "yt-transcript": "^0.0.2"
+    "yt-transcript": "^0.0.2",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

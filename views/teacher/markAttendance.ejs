@@ -1,553 +1,330 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mark Attendance - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <style>
-        .attendance-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .teacher-info {
-            background: #f0f8ff;
-            border-left: 4px solid #007bff;
-        }
-        
-        .already-marked {
-            background: #e8f5e8;
-            border-left: 4px solid #28a745;
-        }
-        
-        .verification-area {
-            text-align: center;
-        }
-        
-        #video-feed {
-            width: 100%;
-            max-width: 640px;
-            height: 480px;
-            border: 3px solid #ddd;
-            border-radius: 8px;
-            background: #000;
-            margin: 20px auto;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.3s;
-            margin: 5px;
-        }
-        
-        .btn:hover {
-            background: #0056b3;
-        }
-        
-        .btn-success { background: #28a745; }
-        .btn-success:hover { background: #218838; }
-        
-        .btn-danger { background: #dc3545; }
-        .btn-danger:hover { background: #c82333; }
-        
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #545b62; }
-        
-        .btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        .status {
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        
-        .status-info {
-            background-color: #e7f3ff;
-            border-left: 4px solid #2196F3;
-        }
-        
-        .status-success {
-            background-color: #e8f5e8;
-            border-left: 4px solid #4CAF50;
-        }
-        
-        .status-error {
-            background-color: #ffe7e7;
-            border-left: 4px solid #f44336;
-        }
-        
-        .status-warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-        
-        .location-info {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-        }
-        
-        .result-card {
-            background: #e8f5e8;
-            border-left: 4px solid #28a745;
-        }
-        
-        .hidden {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <div class="attendance-container">
-            <h1>Mark Your Attendance</h1>
-            
-            <!-- Teacher Information -->
-            <div class="card teacher-info">
-                <h3>Teacher Information</h3>
-                <p><strong>Name:</strong> <%= teacher.name %></p>
-                <p><strong>Email:</strong> <%= teacher.email %></p>
-                <p><strong>Subjects:</strong> <%= teacher.subjects.join(', ') %></p>
-                <p><strong>Today's Date:</strong> <span id="currentDate"></span></p>
-                <% if (teacher.imageUrl) { %>
-                    <p><strong>Face Image:</strong> ✅ Registered</p>
-                <% } else { %>
-                    <p><strong>Face Image:</strong> ❌ Not registered</p>
-                <% } %>
-            </div>
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
 
-            <!-- Check Today's Attendance Status -->
-            <div id="attendanceStatusCard" class="card">
-                <h3>Today's Attendance Status</h3>
-                <div id="attendanceStatusContent">
-                    Loading attendance status...
-                </div>
-            </div>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-            <!-- Attendance Verification -->
-            <div class="card verification-area">
-                <h3>Face & Location Verification</h3>
-                <p>Please allow camera and location access to mark your attendance.</p>
-                
-                <div class="button-group">
-                    <button id="startBtn" class="btn btn-success">Start Verification</button>
-                    <button id="stopBtn" class="btn btn-danger" disabled>Stop Verification</button>
-                    <button id="checkStatusBtn" class="btn btn-secondary">Refresh Status</button>
-                </div>
+<style>
+  .attendance-container {
+    max-width: 800px;
+    margin: 30px auto;
+  }
+  .page-title {
+    font-size: 2rem;
+    margin-bottom: 5px;
+    color: #2c3e50;
+  }
+  .teacher-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+  .teacher-card .avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #3498db;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+  }
+  .teacher-card .info {
+    flex: 1;
+    min-width: 200px;
+  }
+  .teacher-card h3 {
+    margin: 0;
+    color: #2c3e50;
+  }
+  .teacher-card .detail {
+    color: #7f8c8d;
+    margin: 3px 0;
+  }
+  .date-badge {
+    background: #ecf0f1;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 25px 0;
+    flex-wrap: wrap;
+  }
+  .btn-attendance {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .btn-attendance:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  }
+  .btn-own {
+    background: #3498db;
+    color: white;
+  }
+  .btn-own:hover {
+    background: #2980b9;
+  }
+  .btn-student {
+    background: #2ecc71;
+    color: white;
+  }
+  .btn-student:hover {
+    background: #27ae60;
+  }
+  .section-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    display: none;
+  }
+  .section-card.active {
+    display: block;
+  }
+  .section-card h4 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-msg {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-weight: 600;
+  }
+  .status-info { background: #eaf2f8; color: #2980b9; }
+  .status-success { background: #e9f7ef; color: #27ae60; }
+  .status-error { background: #fdedec; color: #c0392b; }
+  .latency { font-size: 0.9rem; color: #7f8c8d; margin-top: 5px; }
+  video, img {
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 10px 0;
+    max-width: 100%;
+  }
+  .result-card {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-top: 15px;
+  }
+</style>
 
-                <div id="status" class="status status-info">
-                    Ready to start verification...
-                </div>
+<div class="attendance-container">
+  <h1 class="page-title">Attendance Panel</h1>
 
-                <div id="locationInfo" class="location-info hidden">
-                    <strong>📍 Location Status:</strong> <span id="locationStatus">Waiting for location...</span>
-                </div>
-
-                <img id="video-feed" src="" alt="Webcam Feed" class="hidden">
-
-                <div id="attendanceResult" class="card result-card hidden">
-                    <h3>✅ Attendance Recorded Successfully!</h3>
-                    <div id="resultDetails"></div>
-                    <a href="/teacher/dashboard" class="btn">Back to Dashboard</a>
-                </div>
-            </div>
-
-            <!-- Instructions -->
-            <div class="card">
-                <h3>Instructions & Rules</h3>
-                <ol style="text-align: left;">
-                    <li>You can mark attendance only <strong>ONCE per day</strong></li>
-                    <li>Click "Start Verification" button</li>
-                    <li>Allow camera access when prompted</li>
-                    <li>Allow location access when prompted</li>
-                    <li>Look directly at the camera</li>
-                    <li>Wait for face verification and location check</li>
-                    <li>Attendance will be automatically recorded</li>
-                </ol>
-                <p><strong>Requirements:</strong></p>
-                <ul style="text-align: left;">
-                    <li>✅ Must be within <strong>500 meters</strong> of the school</li>
-                    <li>✅ Face must match registered image</li>
-                    <li>✅ One attendance record per day only</li>
-                </ul>
-            </div>
-        </div>
+  <!-- Teacher Info Card -->
+  <div class="teacher-card">
+    <div class="avatar">
+      <i class="fas fa-user-circle"></i>
     </div>
+    <div class="info">
+      <h3><%= teacher.name %></h3>
+      <p class="detail"><i class="fas fa-chalkboard"></i> Class Teacher of: <strong><%= teacher.classTeacherOf || 'Not assigned' %></strong></p>
+      <p class="detail"><i class="fas fa-calendar-day"></i> <span id="currentDate"></span></p>
+    </div>
+    <div class="date-badge">
+      <i class="fas fa-clock"></i> <span id="currentTime"></span>
+    </div>
+  </div>
 
-    <%- include('../partials/footer') %>
-    
-    <script>
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const checkStatusBtn = document.getElementById('checkStatusBtn');
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button id="ownAttendanceBtn" class="btn-attendance btn-own">
+      <i class="fas fa-camera"></i> Mark Own Attendance
+    </button>
+    <button id="studentAttendanceBtn" class="btn-attendance btn-student">
+      <i class="fas fa-users"></i> Mark Student Attendance
+    </button>
+  </div>
+
+  <!-- Teacher Attendance Area -->
+  <div id="ownAttendanceArea" class="section-card">
+    <h4><i class="fas fa-user-check"></i> Teacher Face & Location Verification</h4>
+    <div id="ownStatus" class="status-msg status-info">Ready...</div>
+    <div class="location-info">
+      <strong><i class="fas fa-map-marker-alt"></i> Location:</strong>
+      <span id="locationStatus"></span>
+    </div>
+    <img id="video-feed" style="display:none;" />
+    <div id="ownResult" class="result-card" style="display:none;"></div>
+  </div>
+
+  <!-- Student Attendance Area -->
+  <div id="studentAttendanceArea" class="section-card">
+    <h4><i class="fas fa-user-graduate"></i> Student Attendance Capture</h4>
+    <button id="captureStudentBtn" class="btn-attendance btn-student">
+      <i class="fas fa-camera-retro"></i> Capture & Count Students
+    </button>
+    <div id="studentResult" class="result-card" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+const ownBtn = document.getElementById('ownAttendanceBtn');
+const studentBtn = document.getElementById('studentAttendanceBtn');
+const captureBtn = document.getElementById('captureStudentBtn');
+const ownArea = document.getElementById('ownAttendanceArea');
+const studentArea = document.getElementById('studentAttendanceArea');
+let statusCheckInterval;
+
+// Update date & time dynamically
+function updateDateTime() {
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-IN');
+}
+updateDateTime();
+setInterval(updateDateTime, 1000);
+
+// Location helper
+function getLocation() {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000
+    });
+  });
+}
+
+// ==========================
+// TEACHER ATTENDANCE
+// ==========================
+ownBtn.addEventListener('click', async () => {
+  ownArea.classList.add('active');
+  studentArea.classList.remove('active');
+  const statusDiv = document.getElementById('ownStatus');
+  statusDiv.className = 'status-msg status-info';
+  statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+
+  try {
+    const startRes = await fetch("http://localhost:5001/start_verification", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        email: "<%= teacher.email %>",
+        imageUrl: "<%= teacher.imageUrl %>"
+      })
+    });
+    const startData = await startRes.json();
+
+    if (startData.status === "already_marked") {
+      statusDiv.className = 'status-msg status-success';
+      statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> You already marked attendance today.';
+      return;
+    }
+    if (startData.status !== "waiting_for_location") {
+      throw new Error(startData.message);
+    }
+
+    statusDiv.innerHTML = '<i class="fas fa-map-marked-alt"></i> Getting your location...';
+    const position = await getLocation();
+
+    const locRes = await fetch("http://localhost:5001/set_location", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      })
+    });
+    const locData = await locRes.json();
+    document.getElementById('locationStatus').innerHTML =
+      `Distance from school: <strong>${locData.distance_from_school} meters</strong>`;
+
+    if (!locData.within_range) {
+      statusDiv.className = 'status-msg status-error';
+      statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> You are too far from school.';
+      return;
+    }
+
     const videoFeed = document.getElementById('video-feed');
-    const statusDiv = document.getElementById('status');
-    const locationInfo = document.getElementById('locationInfo');
-    const locationStatus = document.getElementById('locationStatus');
-    const attendanceResult = document.getElementById('attendanceResult');
-    const resultDetails = document.getElementById('resultDetails');
-    const attendanceStatusCard = document.getElementById('attendanceStatusCard');
-    const attendanceStatusContent = document.getElementById('attendanceStatusContent');
-    const currentDateSpan = document.getElementById('currentDate');
+    videoFeed.src = "http://localhost:5001/video_feed";
+    videoFeed.style.display = 'block';
+    statusDiv.innerHTML = '<i class="fas fa-camera"></i> Look at the camera...';
 
-    let verificationActive = false;
-    let statusCheckInterval;
+    statusCheckInterval = setInterval(async () => {
+      const res = await fetch("http://localhost:5001/status");
+      const data = await res.json();
 
-    // Set current date
-    currentDateSpan.textContent = new Date().toLocaleDateString();
-
-    function updateStatus(message, type = 'info') {
-        statusDiv.textContent = message;
-        statusDiv.className = `status status-${type}`;
-        statusDiv.style.display = 'block';
-    }
-
-    async function checkTodaysAttendance() {
-        try {
-            attendanceStatusContent.innerHTML = 'Loading attendance status...';
-            
-            // Add cache busting to prevent cached responses
-            const response = await fetch(`/teacher/attendance-status?email=<%= teacher.email %>&t=${Date.now()}`);
-            const data = await response.json();
-            
-            console.log('📊 Attendance status response:', data); // Debug log
-            
-            if (data.success) {
-                if (data.data.attendanceMarked && data.data.attendance) {
-                    attendanceStatusContent.innerHTML = `
-                        <div class="status status-success">
-                            ✅ Attendance already marked today at ${data.data.attendance.time}
-                        </div>
-                        <p><strong>Details:</strong></p>
-                        <ul>
-                            <li>Face Matched: ${data.data.attendance.faceMatched ? '✅ Yes' : '❌ No'}</li>
-                            <li>Location Verified: ${data.data.attendance.locationMatched ? '✅ Yes' : '❌ No'}</li>
-                            <li>Overall Verified: ${data.data.attendance.verified ? '✅ Yes' : '❌ No'}</li>
-                        </ul>
-                        <p><em>You cannot mark attendance again today.</em></p>
-                    `;
-                    attendanceStatusCard.className = 'card already-marked';
-                    startBtn.disabled = true;
-                    
-                    // Also show the attendance result section
-                    showAttendanceResult(true);
-                } else {
-                    attendanceStatusContent.innerHTML = `
-                        <div class="status status-info">
-                            ⏳ No attendance marked for today
-                        </div>
-                        <p>You can mark your attendance now using the button below.</p>
-                    `;
-                    attendanceStatusCard.className = 'card';
-                    startBtn.disabled = false;
-                    
-                    // Hide attendance result if no attendance
-                    attendanceResult.style.display = 'none';
-                }
-            } else {
-                attendanceStatusContent.innerHTML = `
-                    <div class="status status-error">
-                        ❌ Error loading attendance status: ${data.message || 'Unknown error'}
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('Error checking attendance status:', error);
-            attendanceStatusContent.innerHTML = `
-                <div class="status status-error">
-                    ❌ Error loading attendance status: ${error.message}
-                </div>
-            `;
-        }
-    }
-
-    // Check attendance status on page load
-    checkTodaysAttendance();
-
-    async function getLocation() {
-        return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject(new Error('Geolocation is not supported by this browser.'));
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                position => resolve(position),
-                error => reject(error),
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                }
-            );
-        });
-    }
-
-    async function setUserLocation(latitude, longitude) {
-        try {
-            const response = await fetch("http://localhost:5001/set_location", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    latitude: latitude,
-                    longitude: longitude
-                })
-            });
-            
-            const data = await response.json();
-            if (data.status === "success") {
-                locationStatus.textContent = `Location set! Distance from school: ${data.distance_from_school}`;
-                locationInfo.className = data.within_range ? 'location-info' : 'status status-warning';
-                locationInfo.style.display = 'block';
-                return data.within_range;
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error('Error setting location:', error);
-            locationStatus.textContent = `Location error: ${error.message}`;
-            locationInfo.className = 'status status-error';
-            locationInfo.style.display = 'block';
-            return false;
-        }
-    }
-
-    async function checkVerificationStatus() {
-        if (!verificationActive) return;
-        
-        try {
-            const response = await fetch("http://localhost:5001/status");
-            const status = await response.json();
-            
-            console.log('🔍 Flask status check:', status); // Debug log
-            
-            if (status.attendance_done) {
-                updateStatus("✅ Attendance successfully recorded!", "success");
-                showAttendanceResult(true);
-                stopVerification();
-                
-                // Wait a bit longer and retry multiple times to ensure database is updated
-                let retries = 0;
-                const maxRetries = 5;
-                
-                const retryCheck = setInterval(() => {
-                    retries++;
-                    console.log(`🔄 Refreshing attendance status (attempt ${retries})`);
-                    checkTodaysAttendance();
-                    
-                    if (retries >= maxRetries) {
-                        clearInterval(retryCheck);
-                    }
-                }, 1000);
-                
-            } else {
-                // Update status with current information
-                let statusMessage = "Face verification in progress...";
-                if (status.face_loaded && status.location_set) {
-                    statusMessage = `Face: ${status.face_loaded ? '✅ Loaded' : '❌ Loading'} | Location: ${status.within_school_range ? '✅ Verified' : '❌ Too Far'}`;
-                    if (status.distance_from_school) {
-                        statusMessage += ` (${status.distance_from_school.toFixed(1)}m)`;
-                    }
-                }
-                updateStatus(statusMessage, "info");
-            }
-        } catch (error) {
-            console.error('Error checking status:', error);
-        }
-    }
-
-    function showAttendanceResult(success) {
-        if (success) {
-            resultDetails.innerHTML = `
-                <p><strong>Teacher:</strong> <%= teacher.name %></p>
-                <p><strong>Email:</strong> <%= teacher.email %></p>
-                <p><strong>Time:</strong> ${new Date().toLocaleTimeString()}</p>
-                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                <p><strong>Status:</strong> ✅ Verified (Face + Location)</p>
-                <p><strong>Note:</strong> You cannot mark attendance again today.</p>
-            `;
-            attendanceResult.style.display = 'block';
-        }
-    }
-
-    function stopVerification() {
-        verificationActive = false;
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-        
-        if (statusCheckInterval) {
-            clearInterval(statusCheckInterval);
-        }
-        
-        // Hide video feed but don't stop camera (let Flask handle it)
+      if (data.attendance_done) {
+        clearInterval(statusCheckInterval);
         videoFeed.style.display = 'none';
-    }
+        document.getElementById('ownResult').innerHTML =
+          '<h3><i class="fas fa-check-circle" style="color:#27ae60;"></i> Attendance Recorded Successfully!</h3>';
+        document.getElementById('ownResult').style.display = 'block';
+        statusDiv.className = 'status-msg status-success';
+        statusDiv.innerHTML = '<i class="fas fa-thumbs-up"></i> Done!';
+      }
+    }, 2000);
 
-    startBtn.addEventListener('click', async () => {
-        if (verificationActive) return;
-        
-        try {
-            verificationActive = true;
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-            
-            updateStatus("Initializing face verification...");
+  } catch (err) {
+    statusDiv.className = 'status-msg status-error';
+    statusDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message}`;
+  }
+});
 
-            // 1. Start verification on Flask server
-            const response = await fetch("http://localhost:5001/start_verification", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: "<%= teacher.email %>",
-                    imageUrl: "<%= teacher.imageUrl %>"
-                })
-            });
+// ==========================
+// STUDENT ATTENDANCE TOGGLE
+// ==========================
+studentBtn.addEventListener('click', () => {
+  studentArea.classList.add('active');
+  ownArea.classList.remove('active');
+  document.getElementById('studentResult').style.display = 'none';
+});
 
-            const data = await response.json();
+// ==========================
+// MARK STUDENT ATTENDANCE
+// ==========================
+captureBtn.addEventListener('click', async () => {
+  const resultDiv = document.getElementById('studentResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Capturing classroom image and counting students...';
 
-            if (data.status === "ready") {
-                updateStatus("Verification system ready. Getting location...");
-                
-                // 2. Get and set geolocation
-                try {
-                    const position = await getLocation();
-                    const locationWithinRange = await setUserLocation(
-                        position.coords.latitude, 
-                        position.coords.longitude
-                    );
-                    
-                    if (locationWithinRange) {
-                        updateStatus("Location verified! Starting video feed...", "success");
-                        
-                        // 3. Start video feed
-                        videoFeed.src = "http://localhost:5001/video_feed";
-                        videoFeed.style.display = 'block';
-                        
-                        updateStatus("Face verification in progress. Look at the camera...", "success");
-                        
-                        // 4. Start checking status every 2 seconds
-                        statusCheckInterval = setInterval(checkVerificationStatus, 2000);
-                        
-                    } else {
-                        updateStatus("❌ You are too far from school. Please move closer.", "error");
-                        verificationActive = false;
-                        startBtn.disabled = false;
-                        stopBtn.disabled = true;
-                    }
-                } catch (locationError) {
-                    updateStatus(`❌ Location error: ${locationError.message}. Cannot mark attendance without location.`, "error");
-                    verificationActive = false;
-                    startBtn.disabled = false;
-                    stopBtn.disabled = true;
-                }
-            } else if (data.status === "already_marked") {
-                updateStatus(`✅ Attendance already marked today at ${data.attendance_time}`, "success");
-                verificationActive = false;
-                startBtn.disabled = true;
-                stopBtn.disabled = true;
-                
-                // Force refresh the attendance status
-                setTimeout(() => {
-                    checkTodaysAttendance();
-                }, 500);
-            } else {
-                throw new Error(data.message || "Failed to initialize verification");
-            }
-        } catch (error) {
-            console.error('Error starting verification:', error);
-            updateStatus(`❌ Error: ${error.message}`, "error");
-            verificationActive = false;
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-        }
+  try {
+    const res = await fetch("http://localhost:3000/teacher/mark-student-attendance", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        email: "<%= teacher.email %>"
+      })
     });
-
-    stopBtn.addEventListener('click', async () => {
-        try {
-            await fetch("http://localhost:5001/stop_verification", {
-                method: "POST"
-            });
-            
-            videoFeed.style.display = 'none';
-            videoFeed.src = "";
-            locationInfo.style.display = 'none';
-            attendanceResult.style.display = 'none';
-            
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            verificationActive = false;
-            
-            if (statusCheckInterval) {
-                clearInterval(statusCheckInterval);
-            }
-            
-            updateStatus("Verification stopped. Ready to start again.", "info");
-        } catch (error) {
-            console.error('Error stopping verification:', error);
-        }
-    });
-
-    checkStatusBtn.addEventListener('click', checkTodaysAttendance);
-
-    // Debug function to check current status
-    async function debugStatus() {
-        try {
-            console.log('=== DEBUG STATUS ===');
-            
-            // Check Flask status
-            const flaskStatus = await fetch("http://localhost:5001/status");
-            const flaskData = await flaskStatus.json();
-            console.log('Flask Status:', flaskData);
-            
-            // Check Express status
-            const expressStatus = await fetch(`/teacher/attendance-status?email=<%= teacher.email %>`);
-            const expressData = await expressStatus.json();
-            console.log('Express Status:', expressData);
-            
-            // Check debug endpoint
-            const debugStatus = await fetch(`/teacher/debug-attendance?email=<%= teacher.email %>`);
-            const debugData = await debugStatus.json();
-            console.log('Debug Data:', debugData);
-            
-        } catch (error) {
-            console.error('Debug error:', error);
-        }
-    }
-
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-        if (verificationActive) {
-            fetch("http://localhost:5001/stop_verification", { 
-                method: "POST",
-                keepalive: true 
-            });
-        }
-    });
+    const data = await res.json();
+    resultDiv.innerHTML = `<h3><i class="fas fa-check-circle" style="color:#27ae60;"></i> ${data.message}</h3>`;
+  } catch (err) {
+    resultDiv.innerHTML = `<h3><i class="fas fa-times-circle" style="color:#c0392b;"></i> Error: ${err.message}</h3>`;
+  }
+});
 </script>
-</body>
-</html>
+
+<%- include('../partials/footer') %>

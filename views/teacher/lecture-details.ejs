@@ -1,490 +1,248 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lecture Details - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <style>
-        .lecture-details {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .detail-item {
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-        }
-        
-        .transcript-content {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin-top: 10px;
-            white-space: pre-wrap;
-            line-height: 1.6;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .recording-info, .transcript-section, .analysis-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-        }
-        
-        .analysis-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .analysis-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            text-align: center;
-        }
-        
-        .analysis-value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        
-        .match-high { color: #28a745; }
-        .match-medium { color: #ffc107; }
-        .match-low { color: #dc3545; }
-        
-        .status {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .status-scheduled { background: #e3f2fd; color: #1976d2; }
-        .status-recording { background: #ffebee; color: #d32f2f; }
-        .status-completed { background: #e8f5e8; color: #2e7d32; }
-        .status-analyzed { background: #f3e5f5; color: #7b1fa2; }
-        .status-cancelled { background: #f5f5f5; color: #616161; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .status-processing { background: #ffeaa7; color: #856404; }
-        .status-failed { background: #f8d7da; color: #721c24; }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            margin: 5px;
-            transition: background 0.3s;
-        }
-        
-        .btn:hover {
-            background: #0056b3;
-        }
-        
-        .btn-primary { background: #007bff; }
-        .btn-primary:hover { background: #0056b3; }
-        
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #545b62; }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        
-        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        
-        .tab-container {
-            margin: 20px 0;
-        }
-        
-        .tab-buttons {
-            display: flex;
-            border-bottom: 1px solid #dee2e6;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .tab-button {
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            font-size: 1rem;
-            white-space: nowrap;
-        }
-        
-        .tab-button.active {
-            border-bottom: 2px solid #007bff;
-            color: #007bff;
-            font-weight: bold;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
 
-        /* Fix for undefined properties */
-        .no-data {
-            color: #6c757d;
-            font-style: italic;
-        }
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        .analysis-placeholder {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-    </style>
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <h1>Lecture Details</h1>
-        
-        <% if (lecture) { %>
-            <div class="lecture-details">
-                <h2><%= lecture.title || 'Untitled Lecture' %></h2>
-                
-                <div class="details-grid">
-                    <div class="detail-item">
-                        <strong>Subject:</strong> <%= lecture.subject || '<span class="no-data">Not specified</span>' %>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Class:</strong> <%= lecture.class || '<span class="no-data">Not specified</span>' %>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Date:</strong> 
-                        <% if (lecture.date) { %>
-                            <%= new Date(lecture.date).toLocaleDateString() %>
-                        <% } else { %>
-                            <span class="no-data">Not scheduled</span>
-                        <% } %>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Time Slot:</strong> 
-                        <% if (lecture.schedule && lecture.schedule.startTime && lecture.schedule.endTime) { %>
-                            <%= lecture.schedule.startTime %> - <%= lecture.schedule.endTime %>
-                        <% } else { %>
-                            <span class="no-data">Not scheduled</span>
-                        <% } %>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Status:</strong> 
-                        <span class="status status-<%= lecture.status || 'scheduled' %>">
-                            <%= (lecture.status || 'scheduled').toUpperCase() %>
-                        </span>
-                    </div>
-                    <% if (lecture.youtubeVideo && lecture.youtubeVideo.url) { %>
-                    <div class="detail-item">
-                        <strong>Reference Material:</strong> 
-                        <a href="<%= lecture.youtubeVideo.url %>" target="_blank">View</a>
-                    </div>
-                    <% } %>
-                </div>
+<style>
+  .lecture-container {
+    max-width: 900px;
+    margin: 30px auto;
+  }
+  .page-title {
+    font-size: 2rem;
+    margin-bottom: 5px;
+    color: #2c3e50;
+  }
+  .badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: 8px;
+    margin-bottom: 8px;
+  }
+  .badge-subject { background: #3498db; color: #fff; }
+  .badge-class { background: #e67e22; color: #fff; }
+  .badge-status {
+    background: <%- lecture.status === 'completed' ? '#2ecc71' : (lecture.status === 'analyzed' ? '#9b59b6' : '#f1c40f') %>;
+    color: #fff;
+  }
 
-                <!-- Tab Navigation -->
-                <div class="tab-container">
-                    <div class="tab-buttons">
-                        <button class="tab-button active" onclick="openTab(event, 'recording')">Recording Info</button>
-                        <button class="tab-button" onclick="openTab(event, 'analysis')">Analysis Results</button>
-                        <% if (lecture.recording && lecture.recording.transcript) { %>
-                        <button class="tab-button" onclick="openTab(event, 'transcript')">Transcript</button>
-                        <% } %>
-                        <% if (lecture.youtubeVideo && lecture.youtubeVideo.transcript) { %>
-                        <button class="tab-button" onclick="openTab(event, 'reference')">Reference Content</button>
-                        <% } %>
-                    </div>
+  .info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 25px 0;
+  }
+  .info-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .info-card i {
+    font-size: 1.8rem;
+    color: #3498db;
+    width: 40px;
+    text-align: center;
+  }
+  .info-card .label {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin-bottom: 2px;
+  }
+  .info-card .value {
+    font-weight: 700;
+    color: #2c3e50;
+  }
 
-                    <!-- Recording Info Tab -->
-                    <div id="recording" class="tab-content active">
-                        <% if (lecture.recording && lecture.recording.startTime) { %>
-                            <div class="recording-info">
-                                <h3>Recording Information</h3>
-                                <div class="details-grid">
-                                    <div class="detail-item">
-                                        <strong>Start Time:</strong> 
-                                        <%= new Date(lecture.recording.startTime).toLocaleString() %>
-                                    </div>
-                                    <% if (lecture.recording.endTime) { %>
-                                        <div class="detail-item">
-                                            <strong>End Time:</strong> 
-                                            <%= new Date(lecture.recording.endTime).toLocaleString() %>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Duration:</strong> 
-                                            <% if (lecture.recording.duration) { %>
-                                                <%= Math.floor(lecture.recording.duration / 60) %>m 
-                                                <%= lecture.recording.duration % 60 %>s
-                                            <% } else { %>
-                                                <span class="no-data">Not calculated</span>
-                                            <% } %>
-                                        </div>
-                                    <% } %>
-                                    <% if (lecture.recording.wordCount) { %>
-                                        <div class="detail-item">
-                                            <strong>Word Count:</strong> <%= lecture.recording.wordCount %> words
-                                        </div>
-                                    <% } %>
-                                    <% if (lecture.recording.audioUrl) { %>
-                                        <div class="detail-item">
-                                            <strong>Audio File:</strong> 
-                                            <a href="<%= lecture.recording.audioUrl %>" target="_blank">Listen</a>
-                                        </div>
-                                    <% } %>
-                                </div>
-                            </div>
-                        <% } else { %>
-                            <div class="analysis-placeholder">
-                                <h3>No Recording Information</h3>
-                                <p>This lecture hasn't been recorded yet.</p>
-                            </div>
-                        <% } %>
-                    </div>
+  .section-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+  }
+  .section-card h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+  }
+  .section-card h3 i {
+    color: #3498db;
+  }
 
-                    <!-- Analysis Results Tab -->
-                    <div id="analysis" class="tab-content">
-                        <% if (lecture.analysis) { %>
-                            <div class="analysis-section">
-                                <h3>Analysis Results</h3>
-                                
-                                <!-- Key Metrics -->
-                                <div class="analysis-grid">
-                                    <div class="analysis-card">
-                                        <div>Match Percentage</div>
-                                        <% 
-                                            const percentage = lecture.analysis.transcriptMatchPercentage;
-                                            let matchClass = 'match-low';
-                                            if (percentage >= 80) matchClass = 'match-high';
-                                            else if (percentage >= 60) matchClass = 'match-medium';
-                                        %>
-                                        <div class="analysis-value <%= matchClass %>">
-                                            <%= percentage !== undefined && percentage !== null ? percentage + '%' : 'N/A' %>
-                                        </div>
-                                        <small>Content Alignment</small>
-                                    </div>
-                                    
-                                    <div class="analysis-card">
-                                        <div>Human Voice Probability</div>
-                                        <div class="analysis-value <%= lecture.analysis.humanVoiceProbability ? 'match-high' : '' %>">
-                                            <% if (lecture.analysis.humanVoiceProbability) { %>
-                                                <%= (lecture.analysis.humanVoiceProbability * 100).toFixed(1) %>%
-                                            <% } else { %>
-                                                N/A
-                                            <% } %>
-                                        </div>
-                                        <small>Voice Detection</small>
-                                    </div>
-                                    
-                                    <div class="analysis-card">
-                                        <div>Analysis Status</div>
-                                        <div style="margin: 10px 0;">
-                                            <span class="status status-<%= lecture.analysis.status || 'pending' %>">
-                                                <%= (lecture.analysis.status || 'pending').toUpperCase() %>
-                                            </span>
-                                        </div>
-                                        <small>Processing State</small>
-                                    </div>
-                                </div>
+  details {
+    margin-top: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+  }
+  details summary {
+    font-weight: 600;
+    color: #2c3e50;
+    outline: none;
+  }
+  details pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #ecf0f1;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+  }
 
-                                <!-- Detailed Analysis -->
-                                <% if (lecture.analysis.grokAnalysis) { %>
-                                    <div class="details-grid" style="margin-top: 30px;">
-                                        <% if (lecture.analysis.grokAnalysis.conceptualSimilarity) { %>
-                                        <div class="detail-item">
-                                            <strong>Conceptual Similarity:</strong> 
-                                            <%= lecture.analysis.grokAnalysis.conceptualSimilarity %>
-                                        </div>
-                                        <% } %>
-                                        
-                                        <% if (lecture.analysis.grokAnalysis.keyPointsCovered !== undefined) { %>
-                                        <div class="detail-item">
-                                            <strong>Key Points Covered:</strong> 
-                                            <%= lecture.analysis.grokAnalysis.keyPointsCovered %> / 
-                                            <%= lecture.analysis.grokAnalysis.totalKeyPoints || 'N/A' %>
-                                        </div>
-                                        <% } %>
-                                    </div>
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 15px;
+  }
+  .analysis-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .analysis-item .big-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+  .analysis-item .label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+  }
 
-                                    <% if (lecture.analysis.grokAnalysis.strengths && lecture.analysis.grokAnalysis.strengths.length > 0) { %>
-                                    <div class="detail-item" style="margin-top: 15px;">
-                                        <strong>Strengths:</strong><br>
-                                        <ul>
-                                            <% lecture.analysis.grokAnalysis.strengths.forEach(strength => { %>
-                                                <li><%= strength %></li>
-                                            <% }); %>
-                                        </ul>
-                                    </div>
-                                    <% } %>
+  audio {
+    width: 100%;
+    margin: 15px 0;
+    border-radius: 30px;
+  }
 
-                                    <% if (lecture.analysis.grokAnalysis.improvementAreas && lecture.analysis.grokAnalysis.improvementAreas.length > 0) { %>
-                                    <div class="detail-item" style="margin-top: 15px;">
-                                        <strong>Areas for Improvement:</strong><br>
-                                        <ul>
-                                            <% lecture.analysis.grokAnalysis.improvementAreas.forEach(area => { %>
-                                                <li><%= area %></li>
-                                            <% }); %>
-                                        </ul>
-                                    </div>
-                                    <% } %>
+  .btn-link {
+    display: inline-block;
+    background: #3498db;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    text-decoration: none;
+    margin: 5px 0;
+    transition: background 0.2s;
+  }
+  .btn-link:hover { background: #2980b9; }
 
-                                    <% if (lecture.analysis.grokAnalysis.overallAssessment) { %>
-                                    <div class="detail-item" style="margin-top: 15px;">
-                                        <strong>Overall Assessment:</strong><br>
-                                        <%= lecture.analysis.grokAnalysis.overallAssessment %>
-                                    </div>
-                                    <% } %>
+  @media (max-width: 600px) {
+    .info-cards { grid-template-columns: 1fr; }
+    .analysis-grid { grid-template-columns: 1fr; }
+  }
+</style>
 
-                                    <% if (lecture.analysis.grokAnalysis.detailedAnalysis) { %>
-                                    <div class="detail-item" style="margin-top: 15px;">
-                                        <strong>Detailed Analysis:</strong><br>
-                                        <%= lecture.analysis.grokAnalysis.detailedAnalysis %>
-                                    </div>
-                                    <% } %>
-                                <% } else if (lecture.analysis.status === 'processing') { %>
-                                    <div class="analysis-placeholder">
-                                        <h3>Analysis in Progress</h3>
-                                        <p>Please wait while we analyze your lecture recording...</p>
-                                        <div class="loader" style="font-size: 2rem;">⏳</div>
-                                    </div>
-                                <% } %>
+<div class="lecture-container">
+  <h1 class="page-title"><%= lecture.title %></h1>
+  <div>
+    <span class="badge badge-subject"><i class="fas fa-book"></i> <%= lecture.subject %></span>
+    <span class="badge badge-class"><i class="fas fa-chalkboard"></i> Class <%= lecture.classNum %></span>
+    <span class="badge badge-status"><i class="fas fa-circle"></i> <%= lecture.status %></span>
+  </div>
 
-                                <% if (lecture.analysis.analyzedAt) { %>
-                                <div class="detail-item" style="margin-top: 15px;">
-                                    <strong>Analyzed At:</strong> 
-                                    <%= new Date(lecture.analysis.analyzedAt).toLocaleString() %>
-                                </div>
-                                <% } %>
-                            </div>
-                        <% } else { %>
-                            <div class="analysis-placeholder">
-                                <h3>Analysis Not Available</h3>
-                                <p>Analysis will be available after the lecture recording is processed.</p>
-                            </div>
-                        <% } %>
-                    </div>
-
-                    <!-- Transcript Tab -->
-                    <% if (lecture.recording && lecture.recording.transcript) { %>
-                    <div id="transcript" class="tab-content">
-                        <div class="transcript-section">
-                            <h3>Recorded Transcript</h3>
-                            <div class="transcript-content">
-                                <%= lecture.recording.transcript %>
-                            </div>
-                            <% if (lecture.recording.transcriptGeneratedAt) { %>
-                            <div style="margin-top: 10px; color: #666; font-size: 0.9rem;">
-                                Generated: <%= new Date(lecture.recording.transcriptGeneratedAt).toLocaleString() %>
-                            </div>
-                            <% } %>
-                        </div>
-                    </div>
-                    <% } %>
-
-                    <!-- Reference Content Tab -->
-                    <% if (lecture.youtubeVideo && lecture.youtubeVideo.transcript) { %>
-                    <div id="reference" class="tab-content">
-                        <div class="transcript-section">
-                            <h3>Reference Transcript</h3>
-                            <div class="transcript-content">
-                                <%= lecture.youtubeVideo.transcript %>
-                            </div>
-                            <% if (lecture.youtubeVideo.transcriptGeneratedAt) { %>
-                            <div style="margin-top: 10px; color: #666; font-size: 0.9rem;">
-                                Generated: <%= new Date(lecture.youtubeVideo.transcriptGeneratedAt).toLocaleString() %>
-                            </div>
-                            <% } %>
-                        </div>
-                    </div>
-                    <% } %>
-                </div>
-            </div>
-        <% } else { %>
-            <div class="alert alert-danger">
-                <p>Lecture not found.</p>
-            </div>
-        <% } %>
-
-        <div style="text-align: center; margin-top: 30px;">
-            <a href="/teacher/lectures" class="btn btn-secondary">Back to Lectures</a>
-            <a href="/teacher/dashboard" class="btn btn-primary">Go to Dashboard</a>
-        </div>
+  <!-- Quick Information Cards -->
+  <div class="info-cards">
+    <div class="info-card">
+      <i class="fas fa-calendar-alt"></i>
+      <div>
+        <div class="label">Date</div>
+        <div class="value"><%= lecture.date?.toDateString() || 'Not set' %></div>
+      </div>
     </div>
+    <div class="info-card">
+      <i class="fas fa-clock"></i>
+      <div>
+        <div class="label">Time</div>
+        <div class="value"><%= lecture.startTime || '?' %> - <%= lecture.endTime || '?' %></div>
+      </div>
+    </div>
+    <div class="info-card">
+      <i class="fas fa-tag"></i>
+      <div>
+        <div class="label">Topic</div>
+        <div class="value"><%= lecture.topic %></div>
+      </div>
+    </div>
+  </div>
 
-    <%- include('../partials/footer') %>
-    
-    <script>
-        function openTab(event, tabName) {
-            // Hide all tab contents
-            const tabContents = document.getElementsByClassName('tab-content');
-            for (let i = 0; i < tabContents.length; i++) {
-                tabContents[i].classList.remove('active');
-            }
-            
-            // Remove active class from all tab buttons
-            const tabButtons = document.getElementsByClassName('tab-button');
-            for (let i = 0; i < tabButtons.length; i++) {
-                tabButtons[i].classList.remove('active');
-            }
-            
-            // Show the specific tab content and mark button as active
-            const targetTab = document.getElementById(tabName);
-            if (targetTab) {
-                targetTab.classList.add('active');
-            }
-            event.currentTarget.classList.add('active');
-        }  </script>
-        <script>
-    const analysisStatus = '<%= (lecture && lecture.analysis && lecture.analysis.status) ? lecture.analysis.status : "" %>';
-    if (analysisStatus === 'processing') {
-        console.log('Analysis in progress, will refresh in 10 seconds...');
-        setTimeout(() => {
-            window.location.reload();
-        }, 10000);
-    }
-</script>
-      <script>
+  <!-- Reference Video Section -->
+ 
+  <div class="section-card">
+    <h3><i class="fab fa-youtube"></i> Reference Video</h3>
+    <a href="<%= lecture.youtubeVideo.url %>" target="_blank" class="btn-link">
+      <i class="fas fa-external-link-alt"></i> Watch on YouTube
+    </a>
+    <% if (lecture.youtubeVideo.transcript) { %>
+      <details>
+        <summary>View Reference Transcript</summary>
+        <pre><%= lecture.youtubeVideo.transcript %></pre>
+      </details>
+    <% } %>
+  </div>
+  
 
-        // Initialize first tab as active
-        document.addEventListener('DOMContentLoaded', function() {
-            const firstTab = document.querySelector('.tab-button.active');
-            const firstTabContent = document.querySelector('.tab-content.active');
-            if (firstTab && firstTabContent) {
-                firstTab.classList.add('active');
-                firstTabContent.classList.add('active');
-            }
-        });
-    </script>
-</body>
-</html>
+  <!-- Recording Section -->
+  <% if (lecture.recording?.audioUrl) { %>
+  <div class="section-card">
+    <h3><i class="fas fa-microphone-alt"></i> Lecture Recording</h3>
+    <audio controls src="<%= lecture.recording.audioUrl %>"></audio>
+    <% if (lecture.recording.transcript) { %>
+      <details>
+        <summary>Show Recorded Transcript</summary>
+        <pre><%= lecture.recording.transcript %></pre>
+      </details>
+    <% } %>
+  </div>
+  <% } %>
+
+  <!-- AI Analysis Section -->
+  <div class="section-card">
+    <h3><i class="fas fa-robot"></i> AI Analysis</h3>
+    <% if (lecture.analysis?.transcriptMatchPercentage != null) { %>
+      <div class="analysis-grid">
+        <div class="analysis-item">
+          <div class="big-number"><%= lecture.analysis.transcriptMatchPercentage %>%</div>
+          <div class="label">Content Match</div>
+        </div>
+        <div class="analysis-item">
+          <div class="big-number"><%= (lecture.analysis.humanVoiceProbability * 100).toFixed(1) %>%</div>
+          <div class="label">Human Voice Probability</div>
+        </div>
+      </div>
+      <details>
+        <summary>View Complete Analysis JSON</summary>
+        <pre><%= JSON.stringify(lecture.analysis.grokAnalysis, null, 2) %></pre>
+      </details>
+    <% } else { %>
+      <div style="text-align:center; padding:30px; color:#7f8c8d;">
+        <i class="fas fa-hourglass-half fa-3x" style="margin-bottom:15px; display:block;"></i>
+        <p>No analysis data available yet.</p>
+      </div>
+    <% } %>
+  </div>
+
+  <div style="text-align:center; margin-top:30px;">
+    <a href="/principal/dashboard" class="btn-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

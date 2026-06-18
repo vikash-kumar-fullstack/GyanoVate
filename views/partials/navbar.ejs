@@ -1,0 +1,36 @@
+<nav class="navbar">
+    <div class="nav-brand">📚 TeachWithTech</div>
+    <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <% if (typeof user !== 'undefined' && user) { %>
+          <!-- Inside the role-specific sections -->
+<% if (userRole === 'ministry') { %>
+    <li><a href="/ministry/dashboard">Dashboard</a></li>
+    <li><a href="/ministry/schools">Schools</a></li>
+    <!-- <li><a href="/ministry/reports/attendance">Attendance Reports</a></li>
+    <li><a href="/ministry/reports/lectures">Lecture Reports</a></li>
+    <li><a href="/ministry/reports/student-count">Student Count Reports</a></li> -->
+<% } else if (userRole === 'principal') { %>
+    <li><a href="/principal/dashboard">Dashboard</a></li>
+    <li><a href="/principal/lectures/create">Create Lecture</a></li>
+    <!-- <li><a href="/principal/reports/attendance">Attendance Reports</a></li>
+    <li><a href="/principal/reports/lectures">Lecture Reports</a></li>
+    <li><a href="/principal/reports/student-count">Student Count Reports</a></li> -->
+<% } else if (userRole === 'teacher') { %>
+    <li><a href="/teacher/dashboard">Dashboard</a></li>
+    <li><a href="/teacher/lectures">My Lectures</a></li>
+    <li><a href="/teacher/markAttendance"> Mark Attendance</a></li>
+    <li><a href="/teacher/reports/attendance">My Attendance</a></li>
+    <li><a href="/teacher/reports/lectures">Lecture Analysis</a></li>
+    <li><a href="/teacher/reports/student-count">Student Count</a></li>
+<% } %>
+            <li>
+                <form action="/auth/logout" method="post" style="display:inline">
+                    <button type="submit" class="logout-btn">Logout</button>
+                </form>
+            </li>
+        <% } else { %>
+            <li><a href="/auth/login">Login</a></li>
+        <% } %>
+    </ul>
+</nav>

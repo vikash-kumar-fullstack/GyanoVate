@@ -1,0 +1,14 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Attendance Reports - <%= school.name %></h1>
+<form method="get" class="filter-form">
+    <div class="filter-group"><label>Teacher</label><select name="teacherId"><option value="">All</option><% teachers.forEach(t => { %><option value="<%= t._id %>" <%= selectedTeacher == t._id ? 'selected' : '' %>><%= t.name %></option><% }); %></select></div>
+    <div class="filter-group"><label>Start Date</label><input type="date" name="startDate" value="<%= startDate %>"></div>
+    <div class="filter-group"><label>End Date</label><input type="date" name="endDate" value="<%= endDate %>"></div>
+    <button type="submit" class="btn">Filter</button>
+</form>
+<table class="data-table"><thead><tr><th>Teacher</th><th>Email</th><th>Date</th><th>Time</th><th>Face</th><th>Location</th><th>Verified</th></tr></thead>
+<tbody><% attendanceData.forEach(item => { item.attendance.forEach(a => { %>
+<tr><td><%= item.teacher %></td><td><%= item.email %></td><td><%= a.date %></td><td><%= a.time %></td><td><%= a.faceMatched ? '✅' : '❌' %></td><td><%= a.locationMatched ? '✅' : '❌' %></td><td><%= a.verified ? '✅' : '❌' %></td></tr>
+<% }); }); %></tbody></table>
+<%- include('../partials/footer') %>

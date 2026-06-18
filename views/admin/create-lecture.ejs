@@ -1,163 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <style>
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"],
-        input[type="url"],
-        input[type="date"],
-        input[type="time"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        textarea {
-            height: 150px;
-            resize: vertical;
-            font-family: Arial, sans-serif;
-        }
-        .form-help {
-            color: #6c757d;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        .btn {
-            padding: 12px 25px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            display: inline-block;
-            text-align: center;
-        }
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-    </style>
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <h1>Create New Lecture</h1>
-
-        <% if (typeof error !== 'undefined') { %>
-            <div class="alert alert-danger">
-                <%= error %>
-            </div>
-        <% } %>
-
-        <div class="form-container">
-            <form action="/admin/create-lecture" method="POST">
-                <!-- Basic Lecture Information -->
-                <div class="form-group">
-                    <label for="title">Lecture Title *</label>
-                    <input type="text" id="title" name="title" required 
-                           placeholder="Enter lecture title">
-                </div>
-
-                <div class="form-group">
-                    <label for="teacherId">Teacher *</label>
-                    <select id="teacherId" name="teacherId" required>
-                        <option value="">Select a teacher</option>
-                        <% teachers.forEach(teacher => { %>
-                            <option value="<%= teacher._id %>">
-                                <%= teacher.name %> - <%= teacher.email %>
-                            </option>
-                        <% }); %>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="subject">Subject *</label>
-                    <input type="text" id="subject" name="subject" required 
-                           placeholder="e.g., Mathematics, Physics">
-                </div>
-
-                <div class="form-group">
-                    <label for="class">Class *</label>
-                    <input type="text" id="class" name="class" required 
-                           placeholder="e.g., Grade 10, Class 12-B">
-                </div>
-
-                <div class="form-group">
-                    <label for="date">Date *</label>
-                    <input type="date" id="date" name="date" required 
-                           value="<%= new Date().toISOString().split('T')[0] %>">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label for="startTime">Start Time *</label>
-                        <input type="time" id="startTime" name="startTime" required value="09:00">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="endTime">End Time *</label>
-                        <input type="time" id="endTime" name="endTime" required value="10:00">
-                    </div>
-                </div>
-
-                <!-- YouTube Video & Transcript Section -->
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                    <h3>Reference Materials</h3>
-                    
-                    <div class="form-group">
-                        <label for="youtubeUrl">YouTube Video URL (Optional)</label>
-                        <input type="url" id="youtubeUrl" name="youtubeUrl" 
-                               placeholder="https://www.youtube.com/watch?v=...">
-                        <div class="form-help">For reference and content comparison</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="referenceTranscript">Reference Transcript (Optional)</label>
-                        <textarea id="referenceTranscript" name="referenceTranscript" 
-                                  placeholder="Paste the reference transcript here. This will be used to compare with the actual lecture recording transcript for content matching."></textarea>
-                        <div class="form-help">
-                            Paste the expected transcript content. This will be compared with the actual lecture recording for content verification.
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
-                    Create Lecture Schedule
-                </button>
-            </form>
-        </div>
-
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="/admin/dashboard" class="btn btn-secondary">Back to Dashboard</a>
-        </div>
-    </div>
-
-    <%- include('../partials/footer') %>
-</body>
-</html>
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Create New Lecture</h1>
+<% if (error) { %><div class="alert error"><%= error %></div><% } %>
+<form action="/admin/create-lecture" method="post">
+    <div class="form-group"><label>Title</label><input type="text" name="title" required></div>
+    <div class="form-group"><label>Teacher</label><select name="teacherId" required>
+        <option value="">-- Select --</option>
+        <% teachers.forEach(t => { %><option value="<%= t._id %>"><%= t.name %></option><% }); %>
+    </select></div>
+    <div class="form-group"><label>Subject</label><input type="text" name="subject" required></div>
+    <div class="form-group"><label>Class (1-10)</label><input type="number" name="class" min="1" max="10" required></div>
+    <div class="form-group"><label>Date</label><input type="date" name="date" required></div>
+    <div class="form-group"><label>Start Time</label><input type="time" name="startTime" required></div>
+    <div class="form-group"><label>End Time</label><input type="time" name="endTime" required></div>
+    <div class="form-group"><label>YouTube URL (optional)</label><input type="url" name="youtubeUrl"></div>
+    <div class="form-group"><label>Reference Transcript (optional)</label><textarea name="referenceTranscript" rows="4"></textarea></div>
+    <button type="submit">Create Lecture</button>
+</form>
+<%- include('../partials/footer') %>

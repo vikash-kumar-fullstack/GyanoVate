@@ -1,63 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <h1>Manage Schedules</h1>
-
-        <div class="form-container">
-            <% if (schedules.length > 0) { %>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Teacher</th>
-                            <th>Subject</th>
-                            <th>Class</th>
-                            <th>Day</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% schedules.forEach(schedule => { %>
-                            <tr>
-                                <td><%= schedule.teacher.name %></td>
-                                <td><%= schedule.subject %></td>
-                                <td><%= schedule.class %></td>
-                                <td><%= schedule.day %></td>
-                                <td><%= schedule.startTime %> - <%= schedule.endTime %></td>
-                                <td>
-                                    <span class="status status-<%= schedule.isActive ? 'active' : 'inactive' %>">
-                                        <%= schedule.isActive ? 'ACTIVE' : 'INACTIVE' %>
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="btn btn-warning btn-sm">Edit</button>
-                                    <button class="btn btn-danger btn-sm">Delete</button>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p>No schedules found.</p>
-            <% } %>
-        </div>
-
-        <div style="text-align: center; margin-top: 30px;">
-            <a href="/admin/dashboard" class="btn btn-secondary">Back to Dashboard</a>
-            <a href="/admin/create-lecture" class="btn btn-primary">Create New Schedule</a>
-        </div>
-    </div>
-
-    <%- include('../partials/footer') %>
-</body>
-</html>
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Schedules</h1>
+<a href="/admin/schedules/new" class="btn">+ New Schedule</a>
+<table class="data-table">
+    <thead><tr><th>Teacher</th><th>Class</th><th>Subject</th><th>Day</th><th>Time</th></tr></thead>
+    <tbody>
+        <% schedules.forEach(s => { %>
+        <tr>
+            <td><%= s.teacherId ? s.teacherId.name : 'N/A' %></td>
+            <td><%= s.classNum %></td>
+            <td><%= s.subject %></td>
+            <td><%= s.day %></td>
+            <td><%= s.startTime %> - <%= s.endTime %></td>
+        </tr>
+        <% }); %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

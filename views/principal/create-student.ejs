@@ -1,0 +1,36 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<h1>Create Student for <%= school.name %></h1>
+<% if (error) { %><div class="alert error"><%= error %></div><% } %>
+
+<form action="/principal/students/create" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" required>
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" required>
+    </div>
+    <div class="form-group">
+        <label>Roll Number</label>
+        <input type="text" name="rollNumber" required>
+    </div>
+    <div class="form-group">
+        <label>Class (1-10)</label>
+        <input type="number" name="classNum" min="1" max="10" required>
+    </div>
+    <div class="form-group">
+        <label>Parent Phone (optional)</label>
+        <input type="text" name="parentPhone">
+    </div>
+    <div class="form-group">
+        <label>Profile Image (for face recognition)</label>
+        <input type="file" name="profileImage" accept="image/*" required>
+        <small>Upload a clear face photo for attendance verification</small>
+    </div>
+    <button type="submit">Create Student</button>
+</form>
+
+<%- include('../partials/footer') %>

@@ -1,4 +1,8 @@
 const axios = require('axios');
+const ytdl = require('ytdl-core');
+const fs = require('fs');
+const path = require('path');
+const assemblyAI = require('./assemblyAI.js');
 
 class YouTubeTranscriptService {
     constructor() {
@@ -6,104 +10,79 @@ class YouTubeTranscriptService {
             this.tryPackage1.bind(this),
             this.tryPackage2.bind(this),
             this.tryScraping.bind(this),
-            this.tryPuppeteer.bind(this),
-            this.generateRealisticTranscript.bind(this)
+            this.tryAudioFallback.bind(this)
         ];
     }
 
     async getTranscript(videoUrl) {
-        console.log('📹 Attempting to fetch transcript for:', videoUrl);
+        console.log('📹 Fetching transcript for:', videoUrl);
         const videoId = this.extractVideoId(videoUrl);
-        
-        // Try each method in sequence
+
         for (let i = 0; i < this.methods.length; i++) {
             try {
-                console.log(`🔄 Trying method ${i + 1}...`);
                 const transcript = await this.methods[i](videoId, videoUrl);
-                
                 if (transcript && transcript.length > 50) {
-                    console.log(`✅ Success with method ${i + 1}!`);
-                    console.log(`✅ Transcript length: ${transcript.length} characters`);
+                    console.log(`✅ Method ${i + 1} success`);
                     return transcript;
                 }
-            } catch (error) {
-                console.log(`❌ Method ${i + 1} failed:`, error.message);
+            } catch (err) {
+                console.log(`❌ Method ${i + 1} failed:`, err.message);
             }
         }
-        
-        return this.generateRealisticTranscript(videoUrl);
+
+        throw new Error('All transcript methods failed');
     }
 
     async tryPackage1(videoId) {
-        // Try first package
         const { YoutubeTranscript } = require('youtube-transcript-api');
-        const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
-        return transcriptArray.map(item => item.text).join(' ');
+        const data = await YoutubeTranscript.fetchTranscript(videoId);
+        return data.map(i => i.text).join(' ');
     }
 
     async tryPackage2(videoId) {
-        // Try alternative package
         const YouTubeTranscript = require('youtube-transcript');
         return await YouTubeTranscript.getTranscript(videoId);
     }
 
     async tryScraping(videoId) {
-        // Simple scraping attempt
-        const response = await axios.get(
-            `https://www.youtube.com/watch?v=${videoId}`,
-            {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            }
-        );
-        
-        // Look for transcript in response
-        const transcriptMatch = response.data.match(/"text":"([^"]+)"/g);
-        if (transcriptMatch) {
-            return transcriptMatch.map(match => 
-                match.replace(/"text":"([^"]+)"/, '$1')
-            ).join(' ');
-        }
-        throw new Error('No transcript found');
+        const res = await axios.get(`https://www.youtube.com/watch?v=${videoId}`);
+        const match = res.data.match(/"text":"([^"]+)"/g);
+        if (!match) throw new Error('No transcript');
+        return match.map(m => m.replace(/"text":"([^"]+)"/, '$1')).join(' ');
     }
 
-    async tryPuppeteer(videoId) {
-        // Puppeteer method (commented out as it's heavy)
-        console.log('⚠️  Puppeteer method available but requires installation');
-        throw new Error('Puppeteer not configured');
+    async tryAudioFallback(videoId, videoUrl) {
+        console.log('🎧 Using audio fallback');
+
+        const filePath = path.join(__dirname, '../temp/audio.mp3');
+
+        await new Promise((resolve, reject) => {
+            const stream = ytdl(videoUrl, { filter: 'audioonly' });
+            const write = fs.createWriteStream(filePath);
+            stream.pipe(write);
+            write.on('finish', resolve);
+            write.on('error', reject);
+        });
+
+        const audioUrl = await this.uploadToCloudinary(filePath);
+        const transcript = await assemblyAI.transcribeAudio(audioUrl);
+
+        return transcript.text;
     }
 
-    generateRealisticTranscript(videoUrl) {
-        // Fallback: Generate realistic educational transcript
-        const subjects = ['Mathematics', 'Science', 'History', 'Literature'];
-        const subject = subjects[Math.floor(Math.random() * subjects.length)];
-        
-        return `Lecture Transcript: Introduction to ${subject}
+    async uploadToCloudinary(filePath) {
+        const cloudinary = require('cloudinary').v2;
 
-Video Source: ${videoUrl}
-Generated: ${new Date().toISOString()}
+        const result = await cloudinary.uploader.upload(filePath, {
+            resource_type: 'video',
+            folder: 'lecture-audio'
+        });
 
-CONTENT:
-This educational lecture covers fundamental concepts in ${subject}. 
-The instructor provides detailed explanations with practical examples.
-
-KEY TOPICS:
-1. Basic principles and theories
-2. Historical context and development
-3. Practical applications
-4. Current research and future directions
-
-The lecture emphasizes critical thinking and real-world applications.
-
-CONCLUSION:
-Summary of key concepts and their importance in modern education.
-
-Total content: Approximately 250 words of educational material.`;
+        return result.secure_url;
     }
 
     extractVideoId(url) {
-        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        const match = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/);
         return match ? match[1] : null;
     }
 }

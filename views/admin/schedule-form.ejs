@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Create Schedule</h1>
+<% if (error) { %><div class="alert error"><%= error %></div><% } %>
+<form action="/admin/schedules/new" method="post">
+    <div class="form-group"><label>Teacher</label><select name="teacherId" required>
+        <option value="">-- Select --</option>
+        <% teachers.forEach(t => { %><option value="<%= t._id %>"><%= t.name %></option><% }); %>
+    </select></div>
+    <div class="form-group"><label>Class</label><select name="classNum" required>
+        <% classes.forEach(c => { %><option value="<%= c %>">Class <%= c %></option><% }); %>
+    </select></div>
+    <div class="form-group"><label>Subject</label><select name="subject" required>
+        <% subjects.forEach(s => { %><option value="<%= s %>"><%= s %></option><% }); %>
+    </select></div>
+    <div class="form-group"><label>Day</label><select name="day" required>
+        <% days.forEach(d => { %><option value="<%= d %>"><%= d %></option><% }); %>
+    </select></div>
+    <div class="form-group"><label>Start Time</label><input type="time" name="startTime" required></div>
+    <div class="form-group"><label>End Time</label><input type="time" name="endTime" required></div>
+    <button type="submit">Save Schedule</button>
+</form>
+<%- include('../partials/footer') %>

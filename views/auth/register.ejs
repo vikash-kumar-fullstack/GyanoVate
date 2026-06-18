@@ -1,72 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <div class="form-container" style="max-width: 500px; margin: 40px auto;">
-            <h2 style="text-align: center; margin-bottom: 30px;">Teacher Registration</h2>
-            
-            <% if (typeof error !== 'undefined') { %>
-                <div class="alert alert-danger">
-                    <%= error %>
-                </div>
-            <% } %>
-
-            <form action="/auth/register" method="POST">
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" name="name" required 
-                           value="<%= typeof name !== 'undefined' ? name : '' %>">
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" required 
-                           value="<%= typeof email !== 'undefined' ? email : '' %>">
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="subjects">Subjects (comma-separated)</label>
-                    <input type="text" id="subjects" name="subjects" 
-                           placeholder="e.g., Mathematics, Physics, Chemistry"
-                           value="<%= typeof subjects !== 'undefined' ? subjects : '' %>">
-                </div>
-
-                <div class="form-group">
-                    <label for="classes">Classes (comma-separated)</label>
-                    <input type="text" id="classes" name="classes" 
-                           placeholder="e.g., Grade 10, Grade 11, Grade 12"
-                           value="<%= typeof classes !== 'undefined' ? classes : '' %>">
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
-                    Register
-                </button>
-            </form>
-
-            <div style="text-align: center; margin-top: 20px;">
-                <p>Already have an account? <a href="/auth/login">Login here</a></p>
-            </div>
+<%- include('../partials/header') %>
+<div class="auth-form">
+    <h2>Register</h2>
+    <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+    <form action="/auth/register" method="post">
+        <div class="form-group"><label>Full Name</label><input type="text" name="name" required></div>
+        <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+        <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
+        <div class="form-group"><label>Confirm Password</label><input type="password" name="confirmPassword" required></div>
+        <div class="form-group"><label>Role</label>
+            <select name="role" id="roleSelect" onchange="toggleFields()">
+                <option value="teacher">Teacher</option>
+                <option value="student">Student</option>
+            </select>
         </div>
-    </div>
-
-    <%- include('../partials/footer') %>
-</body>
-</html>
+        <div class="form-group"><label>School Code</label><input type="text" name="schoolCode" required></div>
+        <div id="teacherFields">
+            <div class="form-group"><label>Subjects (comma separated: Math,Science,etc.)</label><input type="text" name="subjects"></div>
+            <div class="form-group"><label>Classes (comma separated: 1-10)</label><input type="text" name="classes"></div>
+        </div>
+        <div id="studentFields" style="display:none">
+            <div class="form-group"><label>Roll Number</label><input type="text" name="rollNumber"></div>
+            <div class="form-group"><label>Class (1-10)</label><input type="number" name="studentClass" min="1" max="10"></div>
+        </div>
+        <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="/auth/login">Login here</a></p>
+</div>
+<script>
+    function toggleFields() {
+        const role = document.getElementById('roleSelect').value;
+        document.getElementById('teacherFields').style.display = role === 'teacher' ? 'block' : 'none';
+        document.getElementById('studentFields').style.display = role === 'student' ? 'block' : 'none';
+    }
+    toggleFields();
+</script>
+<%- include('../partials/footer') %>

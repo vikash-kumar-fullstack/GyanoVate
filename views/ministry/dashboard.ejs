@@ -1,0 +1,247 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<style>
+  .dashboard-header { margin-bottom: 20px; }
+  .filters {
+    display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;
+    background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+  }
+  .filter-group { display: flex; flex-direction: column; }
+  .filter-group label { font-weight: 600; margin-bottom: 5px; }
+  .filter-group input, .filter-group select { padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; }
+  .btn-filter { padding: 8px 20px; background: #3498db; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+
+  .summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }
+  .card .value { font-size: 2rem; font-weight: 700; color: #2c3e50; }
+  .card .label { font-size: 0.9rem; color: #7f8c8d; }
+
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .chart-box { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .chart-box h4 { margin-bottom: 10px; }
+
+  .rankings-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+  .ranking-box { background: #fff; border-radius: 12px; padding: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .ranking-box h5 { margin-top: 0; border-bottom: 2px solid #3498db; padding-bottom: 8px; }
+  .rank-list { list-style: none; padding: 0; }
+  .rank-list li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+  .rank-list li:last-child { border-bottom: none; }
+  .badge { background: #3498db; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-right: 8px; }
+  .highlight { background: #e8f4fd; }
+  .text-right { text-align: right; }
+</style>
+
+<h1>Ministry Dashboard</h1>
+
+<!-- Filters -->
+<form class="filters" method="GET" action="/ministry/dashboard">
+  <div class="filter-group">
+    <label>📅 Date</label>
+    <input type="date" name="date" value="<%= date %>">
+  </div>
+  <div class="filter-group">
+    <label>🏫 School</label>
+    <select name="schoolId">
+      <option value="">-- All Schools (rankings only) --</option>
+      <% schools.forEach(sch => { %>
+        <option value="<%= sch._id %>" <%= (selectedSchoolId == sch._id) ? 'selected' : '' %>>
+          <%= sch.name %> (<%= sch.code %>)
+        </option>
+      <% }) %>
+    </select>
+  </div>
+  <button type="submit" class="btn-filter">Apply</button>
+</form>
+
+<!-- Overall summary cards -->
+<div class="summary-cards">
+  <div class="card">
+    <div class="value"><%= overall.attendance %>%</div>
+    <div class="label">Avg. Teacher Attendance</div>
+  </div>
+  <div class="card">
+    <div class="value"><%= overall.students %></div>
+    <div class="label">Avg. Students/Class</div>
+  </div>
+  <div class="card">
+    <div class="value"><%= overall.match %>%</div>
+    <div class="label">Avg. Content Match</div>
+  </div>
+  <div class="card">
+    <div class="value"><%= overall.voice %>%</div>
+    <div class="label">Avg. Voice Probability</div>
+  </div>
+</div>
+
+<% if (selectedSchool) { %>
+  <!-- Comparison charts for selected school -->
+  <h3 style="margin-bottom: 15px;">
+    📊 <%= selectedSchool.name %> vs All‑School Average on <%= date %>
+  </h3>
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h4>Teacher Attendance (%)</h4>
+      <canvas id="chartAttendance"></canvas>
+    </div>
+    <div class="chart-box">
+      <h4>Avg. Students per Class</h4>
+      <canvas id="chartStudents"></canvas>
+    </div>
+    <div class="chart-box">
+      <h4>Avg. Content Match (%)</h4>
+      <canvas id="chartContent"></canvas>
+    </div>
+    <div class="chart-box">
+      <h4>Avg. Voice Probability (%)</h4>
+      <canvas id="chartVoice"></canvas>
+    </div>
+  </div>
+<% } else { %>
+  <div style="background:#fff; padding:20px; border-radius:12px; margin-bottom:30px; text-align:center;">
+    👆 Select a school above to see its detailed performance charts.
+  </div>
+<% } %>
+
+<!-- Rankings -->
+<h3 style="margin-bottom: 15px;">🏆 School Rankings on <%= date %></h3>
+<div class="rankings-container">
+  <!-- Attendance ranking -->
+  <div class="ranking-box">
+    <h5>📋 Teacher Attendance</h5>
+    <ol class="rank-list">
+      <% rankings.attendance.forEach((s, idx) => { %>
+        <li class="<%= (selectedSchool && s.schoolId === selectedSchool.schoolId) ? 'highlight' : '' %>">
+          <span><span class="badge"><%= idx+1 %></span><%= s.name %></span>
+          <strong><%= s.attendancePercent %>%</strong>
+        </li>
+      <% }) %>
+    </ol>
+  </div>
+
+  <!-- Student count ranking -->
+  <div class="ranking-box">
+    <h5>👩‍🎓 Avg. Students/Class</h5>
+    <ol class="rank-list">
+      <% rankings.students.forEach((s, idx) => { %>
+        <li class="<%= (selectedSchool && s.schoolId === selectedSchool.schoolId) ? 'highlight' : '' %>">
+          <span><span class="badge"><%= idx+1 %></span><%= s.name %></span>
+          <strong><%= s.avgStudentCount %></strong>
+        </li>
+      <% }) %>
+    </ol>
+  </div>
+
+  <!-- Content match ranking -->
+  <div class="ranking-box">
+    <h5>📖 Content Match</h5>
+    <ol class="rank-list">
+      <% rankings.content.forEach((s, idx) => { %>
+        <li class="<%= (selectedSchool && s.schoolId === selectedSchool.schoolId) ? 'highlight' : '' %>">
+          <span><span class="badge"><%= idx+1 %></span><%= s.name %></span>
+          <strong><%= s.avgContentMatch %>%</strong>
+        </li>
+      <% }) %>
+    </ol>
+  </div>
+
+  <!-- Voice probability ranking -->
+  <div class="ranking-box">
+    <h5>🎤 Voice Probability</h5>
+    <ol class="rank-list">
+      <% rankings.voice.forEach((s, idx) => { %>
+        <li class="<%= (selectedSchool && s.schoolId === selectedSchool.schoolId) ? 'highlight' : '' %>">
+          <span><span class="badge"><%= idx+1 %></span><%= s.name %></span>
+          <strong><%= s.avgVoiceProb %>%</strong>
+        </li>
+      <% }) %>
+    </ol>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  <% if (selectedSchool) { %>
+    // Values
+    const schoolAttendance = <%= selectedSchool.attendancePercent %>;
+    const overallAttendance = <%= overall.attendance %>;
+    const schoolStudents = <%= selectedSchool.avgStudentCount %>;
+    const overallStudents = <%= overall.students %>;
+    const schoolContent = <%= selectedSchool.avgContentMatch %>;
+    const overallContent = <%= overall.match %>;
+    const schoolVoice = <%= selectedSchool.avgVoiceProb %>;
+    const overallVoice = <%= overall.voice %>;
+
+    // Common options for horizontal bar charts
+    const barOptions = {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: true, position: 'bottom' } },
+      scales: {
+        x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
+      }
+    };
+
+    // 1. Attendance chart
+    new Chart(document.getElementById('chartAttendance'), {
+      type: 'bar',
+      data: {
+        labels: [''],
+        datasets: [
+          { label: '<%= selectedSchool.name %>', data: [schoolAttendance], backgroundColor: '#3498db' },
+          { label: 'All Schools Avg', data: [overallAttendance], backgroundColor: '#95a5a6' }
+        ]
+      },
+      options: barOptions
+    });
+
+    // 2. Student count (not percentage, so we adjust max)
+    const maxStudents = Math.max(schoolStudents, overallStudents, 10) + 5;
+    new Chart(document.getElementById('chartStudents'), {
+      type: 'bar',
+      data: {
+        labels: [''],
+        datasets: [
+          { label: '<%= selectedSchool.name %>', data: [schoolStudents], backgroundColor: '#e67e22' },
+          { label: 'All Schools Avg', data: [overallStudents], backgroundColor: '#95a5a6' }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: true, position: 'bottom' } },
+        scales: { x: { beginAtZero: true, max: maxStudents } }
+      }
+    });
+
+    // 3. Content match chart
+    new Chart(document.getElementById('chartContent'), {
+      type: 'bar',
+      data: {
+        labels: [''],
+        datasets: [
+          { label: '<%= selectedSchool.name %>', data: [schoolContent], backgroundColor: '#2ecc71' },
+          { label: 'All Schools Avg', data: [overallContent], backgroundColor: '#95a5a6' }
+        ]
+      },
+      options: barOptions
+    });
+
+    // 4. Voice probability chart
+    new Chart(document.getElementById('chartVoice'), {
+      type: 'bar',
+      data: {
+        labels: [''],
+        datasets: [
+          { label: '<%= selectedSchool.name %>', data: [schoolVoice], backgroundColor: '#9b59b6' },
+          { label: 'All Schools Avg', data: [overallVoice], backgroundColor: '#95a5a6' }
+        ]
+      },
+      options: barOptions
+    });
+  <% } %>
+</script>
+
+<%- include('../partials/footer') %>

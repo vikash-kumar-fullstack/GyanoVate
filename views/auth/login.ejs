@@ -1,53 +1,220 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <div class="form-container" style="max-width: 400px; margin: 60px auto;">
-            <h2 style="text-align: center; margin-bottom: 30px;">Teacher Login</h2>
-            
-            <% if (typeof error !== 'undefined') { %>
-                <div class="alert alert-danger">
-                    <%= error %>
-                </div>
-            <% } %>
-            
-            <% if (typeof message !== 'undefined') { %>
-                <div class="alert alert-success">
-                    <%= message %>
-                </div>
-            <% } %>
 
-            <form action="/auth/login" method="POST">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" required 
-                           value="<%= typeof email !== 'undefined' ? email : '' %>">
-                </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
-                    Login
-                </button>
-            </form>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-            <div style="text-align: center; margin-top: 20px;">
-                <p>Don't have an account? <a href="/auth/register">Register here</a></p>
-            </div>
-        </div>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .auth-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .logo-area .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+    border-radius: 16px;
+    color: white;
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 180, 219, 0.3);
+  }
+
+  .auth-card h2 {
+    color: #1a1a2e;
+    font-size: 1.8rem;
+    margin-bottom: 6px;
+  }
+
+  .auth-card .subtitle {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .alert {
+    padding: 12px 18px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .alert.error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+  .alert.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    color: #374151;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .form-group .input-wrapper {
+    position: relative;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 14px 18px 14px 46px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    color: #1a1a2e;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    transition: 0.25s;
+    outline: none;
+  }
+
+  .form-group input:focus {
+    border-color: #00b4db;
+    box-shadow: 0 0 0 3px rgba(0, 180, 219, 0.1);
+    background: #ffffff;
+  }
+
+  .form-group input::placeholder {
+    color: #9ca3af;
+  }
+
+  .input-wrapper i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 1.1rem;
+    transition: 0.25s;
+  }
+
+  .form-group input:focus + i,
+  .form-group input:focus ~ i {
+    color: #00b4db;
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 180, 219, 0.6);
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover {
+    color: #00b4db;
+  }
+</style>
+
+<div class="auth-card">
+  <div class="logo-area">
+    <div class="icon">
+      <i class="fas fa-graduation-cap"></i>
+    </div>
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Sign in to your TeachWithTech dashboard</p>
+  </div>
+
+  <% if (error) { %><div class="alert error"><i class="fas fa-exclamation-circle"></i> <%= error %></div><% } %>
+  <% if (message) { %><div class="alert success"><i class="fas fa-check-circle"></i> <%= message %></div><% } %>
+
+  <form action="/auth/login" method="post">
+    <div class="form-group">
+      <label>Email address</label>
+      <div class="input-wrapper">
+        <input type="email" name="email" placeholder="you@example.com" required>
+        <i class="fas fa-envelope"></i>
+      </div>
     </div>
 
-    <%- include('../partials/footer') %>
-</body>
-</html>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-wrapper">
+        <input type="password" name="password" placeholder="Enter your password" required>
+        <i class="fas fa-lock"></i>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-login">
+      <i class="fas fa-arrow-right-to-bracket"></i> Log In
+    </button>
+  </form>
+
+  <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to home</a>
+</div>
+
+<%- include('../partials/footer') %>

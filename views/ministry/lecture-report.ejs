@@ -1,0 +1,15 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Lecture Analysis Reports (All Schools)</h1>
+<form method="get" class="filter-form">
+    <div class="filter-group"><label>School</label><select name="schoolId"><option value="">All</option><% schools.forEach(s => { %><option value="<%= s._id %>" <%= selectedSchool == s._id ? 'selected' : '' %>><%= s.name %></option><% }); %></select></div>
+    <div class="filter-group"><label>Teacher</label><select name="teacherId"><option value="">All</option><% teachers.forEach(t => { %><option value="<%= t._id %>" <%= selectedTeacher == t._id ? 'selected' : '' %>><%= t.name %></option><% }); %></select></div>
+    <div class="filter-group"><label>Start Date</label><input type="date" name="startDate" value="<%= startDate %>"></div>
+    <div class="filter-group"><label>End Date</label><input type="date" name="endDate" value="<%= endDate %>"></div>
+    <button type="submit" class="btn">Filter</button>
+</form>
+<table class="data-table"><thead><tr><th>School</th><th>Teacher</th><th>Title</th><th>Class</th><th>Subject</th><th>Topic</th><th>Date</th><th>Match %</th><th>Human Voice</th><th>Status</th></tr></thead>
+<tbody><% lectures.forEach(l => { %>
+<tr><td><%= l.schoolId?.name || '-' %></td><td><%= l.teacherId?.name || '-' %></td><td><%= l.title %></td><td><%= l.classNum %></td><td><%= l.subject %></td><td><%= l.topic %></td><td><%= l.date.toDateString() %></td><td><%= l.analysis?.transcriptMatchPercentage || '-' %>%</td><td><%= l.analysis?.humanVoiceProbability ? (l.analysis.humanVoiceProbability * 100).toFixed(1) + '%' : '-' %></td><td><%= l.status %></td></tr>
+<% }); %></tbody></table>
+<%- include('../partials/footer') %>

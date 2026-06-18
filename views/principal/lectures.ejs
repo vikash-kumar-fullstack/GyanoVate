@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>All Lectures</h1>
+<table class="data-table">
+    <thead><tr><th>Title</th><th>Teacher</th><th>Class</th><th>Subject</th><th>Topic</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+    <tbody>
+        <% lectures.forEach(l => { %>
+        <tr>
+            <td><%= l.title %></td>
+            <td><%= l.teacherId ? l.teacherId.name : '-' %></td>
+            <td><%= l.classNum %></td>
+            <td><%= l.subject %></td>
+            <td><%= l.topic %></td>
+            <td><%= l.date.toDateString() %></td>
+            <td><%= l.startTime %>-<%= l.endTime %></td>
+            <td><%= l.status %></td>
+        </tr>
+        <% }); %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

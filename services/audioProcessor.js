@@ -5,7 +5,7 @@ const assemblyAIService = require('./assemblyAI');
 
 class AudioProcessor {
     constructor() {
-        this.uploadDir = path.join(__dirname, '../public/audio');
+       this.uploadDir = path.join(process.cwd(), 'public/audio');
     }
 
     async processAudioFile(filename) {

@@ -1,0 +1,256 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  .report-page {
+    max-width: 1000px;
+    margin: 30px auto;
+  }
+  .school-header {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+  }
+  .school-header h1 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+  }
+  .school-header .details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    color: #7f8c8d;
+  }
+  .detail-badge {
+    background: #f8f9fa;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .stat-card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+  .stat-card .label {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin-top: 5px;
+  }
+  .table-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow-x: auto;
+    margin-bottom: 25px;
+  }
+  .table-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  .data-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    color: #2c3e50;
+    vertical-align: middle;
+  }
+  .password-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pwd-hidden {
+    color: #7f8c8d;
+    font-style: italic;
+  }
+  .btn-eye {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #3498db;
+    font-size: 1rem;
+    transition: color 0.2s;
+  }
+  .btn-eye:hover {
+    color: #2980b9;
+  }
+  .btn-primary {
+    display: inline-block;
+    background: #3498db;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  }
+  .empty-state {
+    text-align: center;
+    padding: 30px;
+    color: #7f8c8d;
+  }
+</style>
+
+<div class="report-page">
+  <!-- School Header -->
+  <div class="school-header">
+    <h1><i class="fas fa-school"></i> <%= school.name %></h1>
+    <div class="details">
+      <span class="detail-badge"><i class="fas fa-hashtag"></i> <%= school.code %></span>
+      <span class="detail-badge"><i class="fas fa-map-marked-alt"></i> <%= school.district || 'Unknown District' %></span>
+      <span class="detail-badge"><i class="fas fa-flag"></i> <%= school.state || 'Unknown State' %></span>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="value"><%= teachers.length %></div>
+      <div class="label">Total Teachers</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">
+        <% 
+          let withPassword = teachers.filter(t => t.plainPassword).length;
+        %>
+        <%= withPassword %>
+      </div>
+      <div class="label">With Passwords</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">
+        <% 
+          let classTeachers = teachers.filter(t => t.classTeacherOf).length;
+        %>
+        <%= classTeachers %>
+      </div>
+      <div class="label">Class Teachers</div>
+    </div>
+  </div>
+
+  <!-- Teachers Table -->
+  <div class="table-card">
+    <h3><i class="fas fa-users"></i> Teachers</h3>
+    <% if (teachers.length > 0) { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><i class="fas fa-user"></i> Name</th>
+          <th><i class="fas fa-envelope"></i> Email</th>
+          <th><i class="fas fa-book-open"></i> Subjects</th>
+          <th><i class="fas fa-chalkboard"></i> Classes</th>
+          <th><i class="fas fa-star"></i> Class Teacher Of</th>
+          <th><i class="fas fa-key"></i> Password</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% teachers.forEach(t => { %>
+        <tr>
+          <td><strong><%= t.name %></strong></td>
+          <td><%= t.email %></td>
+          <td><%= t.subjects ? t.subjects.join(', ') : '<span class="pwd-hidden">—</span>' %></td>
+          <td><%= t.classes ? t.classes.join(', ') : '<span class="pwd-hidden">—</span>' %></td>
+          <td><%= t.classTeacherOf || '<span class="pwd-hidden">—</span>' %></td>
+          <td>
+            <% if (t.plainPassword) { %>
+              <div class="password-cell">
+                <span id="tpwd-<%= t._id %>" class="pwd-hidden">••••••••</span>
+                <button class="btn-eye" onclick="toggleTeacherPwd('<%= t._id %>', this)" title="Show/Hide Password">
+                  <i id="eye-icon-<%= t._id %>" class="fas fa-eye"></i>
+                </button>
+              </div>
+              <span id="tplain-<%= t._id %>" style="display:none;" data-pwd="<%= t.plainPassword %>"></span>
+            <% } else { %>
+              <span class="pwd-hidden">—</span>
+            <% } %>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <% } else { %>
+      <div class="empty-state">
+        <i class="fas fa-user-slash fa-3x" style="display:block; margin-bottom:15px;"></i>
+        No teachers assigned to this school yet.
+      </div>
+    <% } %>
+  </div>
+
+  <div style="text-align:center;">
+    <a href="/ministry/schools/<%= school._id %>/teachers/create" class="btn-primary">
+      <i class="fas fa-plus-circle"></i> Create New Teacher
+    </a>
+  </div>
+</div>
+
+<script>
+  function toggleTeacherPwd(id, btn) {
+    const hiddenSpan = document.getElementById(`tpwd-${id}`);
+    const plainSpan = document.getElementById(`tplain-${id}`);
+    const eyeIcon = document.getElementById(`eye-icon-${id}`);
+
+    if (hiddenSpan.style.display !== 'none') {
+      // Show actual password
+      const actualPwd = plainSpan.getAttribute('data-pwd');
+      hiddenSpan.innerText = actualPwd;
+      hiddenSpan.classList.remove('pwd-hidden');
+      hiddenSpan.style.fontWeight = 'bold';
+      eyeIcon.classList.remove('fa-eye');
+      eyeIcon.classList.add('fa-eye-slash');
+    } else {
+      // Hide
+      hiddenSpan.innerText = '••••••••';
+      hiddenSpan.classList.add('pwd-hidden');
+      hiddenSpan.style.fontWeight = 'normal';
+      eyeIcon.classList.remove('fa-eye-slash');
+      eyeIcon.classList.add('fa-eye');
+    }
+  }
+</script>
+
+<%- include('../partials/footer') %>

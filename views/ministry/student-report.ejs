@@ -1,0 +1,29 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Student Report: <%= student.name %></h1>
+<p>School: <%= school.name %> | Class: <%= student.class %> | Roll: <%= student.rollNumber %></p>
+<p>Period: <%= period %></p>
+<h2>Attendance</h2>
+<% if (attendance) { %>
+    <p>Date: <%= attendance.date %>, Status: <%= attendance.status %></p>
+<% } else { %>
+    <p>No attendance record for selected period.</p>
+<% } %>
+
+<h2>Academic Results</h2>
+<table class="data-table">
+    <thead><tr><th>Exam</th><th>Subject</th><th>Marks</th><th>Max Marks</th><th>Percentage</th><th>Grade</th></tr></thead>
+    <tbody>
+        <% academics.forEach(a => { %>
+        <tr>
+            <td><%= a.examName %></td>
+            <td><%= a.subject %></td>
+            <td><%= a.marksObtained %></td>
+            <td><%= a.maxMarks %></td>
+            <td><%= a.percentage %>%</td>
+            <td><%= a.grade %></td>
+        </tr>
+        <% }); %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

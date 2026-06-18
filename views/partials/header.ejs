@@ -1,50 +1,11 @@
-<header class="header">
-    <nav class="nav">
-        <div class="logo">
-            <a href="/">🎓 LectureSystem</a>
-        </div>
-        <div class="nav-links">
-            <% if (locals.teacher) { %>
-                <% if (locals.teacher.role === 'admin') { %>
-                    <a href="/admin/dashboard">Admin Dashboard</a>
-                    <a href="/admin/create-lecture">Create Lecture</a>
-                    <a href="/admin/schedules">Schedules</a>
-                <% } else { %>
-                    <a href="/teacher/dashboard">Dashboard</a>
-                    <a href="/teacher/lectures">My Lectures</a>
-                    <a href="/teacher/markAttendance">MarkAttendance</a>
-                <% } %>
-                
-                <span style="color: white; margin-left: 15px;">
-                    Welcome, <%= teacher.name %>
-                </span>
-                
-                <form action="/auth/logout" method="POST" style="display: inline;">
-                    <button type="submit" class="btn-logout">
-                        Logout
-                    </button>
-                </form>
-            <% } else { %>
-                <a href="/auth/login">Login</a>
-                <a href="/auth/register">Register</a>
-                <a href="/about">About</a>
-            <% } %>
-        </div>
-    </nav>
-</header>
-
-<style>
-.btn-logout {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    padding: 8px 16px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-.btn-logout:hover {
-    background-color: rgba(255,255,255,0.1);
-}
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">

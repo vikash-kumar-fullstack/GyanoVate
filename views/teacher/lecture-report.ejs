@@ -1,0 +1,252 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  .analysis-page {
+    max-width: 1000px;
+    margin: 30px auto;
+  }
+  .filter-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .filter-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2c3e50;
+  }
+  .filter-group input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+  }
+  .btn-filter {
+    padding: 9px 20px;
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-filter:hover {
+    background: #2980b9;
+  }
+
+  .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .stat-card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+  .stat-card .label {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin-top: 5px;
+  }
+
+  .table-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow-x: auto;
+  }
+  .table-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  .data-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    color: #2c3e50;
+    vertical-align: middle;
+  }
+  .badge-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+  }
+  .badge-scheduled { background: #f1c40f; }
+  .badge-recording { background: #e74c3c; }
+  .badge-completed { background: #2ecc71; }
+  .badge-analyzed { background: #9b59b6; }
+  .badge-cancelled { background: #95a5a6; }
+  .metric-high { color: #27ae60; font-weight: 700; }
+  .metric-mid { color: #f39c12; font-weight: 700; }
+  .metric-low { color: #e74c3c; font-weight: 700; }
+  .empty-state {
+    text-align: center;
+    padding: 30px;
+    color: #7f8c8d;
+  }
+</style>
+
+<div class="analysis-page">
+  <h1 style="color: #2c3e50; margin-bottom: 5px;">
+    <i class="fas fa-chart-line"></i> My Lecture Analysis
+  </h1>
+
+  <!-- Filter -->
+  <form method="get" class="filter-card">
+    <div class="filter-group">
+      <label>Start Date</label>
+      <input type="date" name="startDate" value="<%= startDate %>">
+    </div>
+    <div class="filter-group">
+      <label>End Date</label>
+      <input type="date" name="endDate" value="<%= endDate %>">
+    </div>
+    <button type="submit" class="btn-filter">
+      <i class="fas fa-filter"></i> Apply
+    </button>
+  </form>
+
+  <!-- Summary Cards -->
+  <%
+    let totalLectures = lectures.length;
+    let sumMatch = 0, countMatch = 0;
+    let sumVoice = 0, countVoice = 0;
+    let maxMatch = 0;
+
+    lectures.forEach(l => {
+      if (l.analysis?.transcriptMatchPercentage != null) {
+        let m = parseFloat(l.analysis.transcriptMatchPercentage);
+        sumMatch += m;
+        countMatch++;
+        if (m > maxMatch) maxMatch = m;
+      }
+      if (l.analysis?.humanVoiceProbability != null) {
+        let v = parseFloat(l.analysis.humanVoiceProbability);
+        sumVoice += v;
+        countVoice++;
+      }
+    });
+    let avgMatch = countMatch > 0 ? (sumMatch / countMatch).toFixed(1) : '—';
+    let avgVoice = countVoice > 0 ? (sumVoice / countVoice * 100).toFixed(1) : '—';
+  %>
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="value"><%= totalLectures %></div>
+      <div class="label">Total Lectures</div>
+    </div>
+    <div class="stat-card">
+      <div class="value"><%= avgMatch %>%</div>
+      <div class="label">Avg. Content Match</div>
+    </div>
+    <div class="stat-card">
+      <div class="value"><%= avgVoice %>%</div>
+      <div class="label">Avg. Voice Probability</div>
+    </div>
+    <div class="stat-card">
+      <div class="value"><%= maxMatch %>%</div>
+      <div class="label">Best Match %</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <h3>
+      <i class="fas fa-list-alt"></i> Lecture Records
+    </h3>
+    <% if (lectures.length > 0) { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><i class="fas fa-heading"></i> Title</th>
+          <th><i class="fas fa-chalkboard"></i> Class</th>
+          <th><i class="fas fa-book"></i> Subject</th>
+          <th><i class="fas fa-tag"></i> Topic</th>
+          <th><i class="far fa-calendar-alt"></i> Date</th>
+          <th><i class="fas fa-percent"></i> Match</th>
+          <th><i class="fas fa-microphone-alt"></i> Voice</th>
+          <th><i class="fas fa-circle"></i> Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% lectures.forEach(l => { %>
+        <tr>
+          <td><%= l.title %></td>
+          <td><%= l.classNum %></td>
+          <td><%= l.subject %></td>
+          <td><%= l.topic %></td>
+          <td><%= l.date.toDateString() %></td>
+          <td>
+            <% if (l.analysis?.transcriptMatchPercentage != null) { 
+                let val = parseFloat(l.analysis.transcriptMatchPercentage);
+                let cssClass = val >= 75 ? 'metric-high' : (val >= 50 ? 'metric-mid' : 'metric-low'); %>
+              <span class="<%= cssClass %>"><%= val.toFixed(1) %>%</span>
+            <% } else { %>—<% } %>
+          </td>
+          <td>
+            <% if (l.analysis?.humanVoiceProbability != null) {
+                let val = parseFloat(l.analysis.humanVoiceProbability);
+                let cssClass = val >= 0.9 ? 'metric-high' : (val >= 0.7 ? 'metric-mid' : 'metric-low'); %>
+              <span class="<%= cssClass %>"><%= (val * 100).toFixed(1) %>%</span>
+            <% } else { %>—<% } %>
+          </td>
+          <td>
+            <span class="badge-status badge-<%= l.status %>">
+              <%= l.status %>
+            </span>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <% } else { %>
+      <div class="empty-state">
+        <i class="fas fa-search fa-3x" style="display:block; margin-bottom:15px;"></i>
+        No lecture records found for this period.
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,29 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Class <%= classNum %> Report</h1>
+<p>Period: <%= period %></p>
+<h2>Students</h2>
+<table class="data-table">
+    <thead><tr><th>Name</th><th>Roll Number</th><th>Attendance (present/total)</th><th>Average Marks</th></tr></thead>
+    <tbody>
+        <% students.forEach(s => { 
+            let presentCount = 0;
+            attendanceRecords.forEach(ar => {
+                const record = ar.records.find(r => r.studentId.toString() === s._id.toString());
+                if (record && record.status === 'present') presentCount++;
+            });
+            const totalDays = attendanceRecords.length;
+            const avgMarks = academics.filter(a => a.studentId.toString() === s._id.toString()).reduce((sum,a)=>sum+a.percentage,0) / (academics.filter(a=>a.studentId.toString()===s._id.toString()).length || 1);
+        %>
+        <tr>
+            <td><%= s.name %></td>
+            <td><%= s.rollNumber %></td>
+            <td><%= presentCount %>/<%= totalDays %></td>
+            <td><%= avgMarks.toFixed(1) %>%</td>
+        </tr>
+        <% }); %>
+    </tbody>
+</table>
+<h2>Lectures</h2>
+<ul><% lectures.forEach(l => { %><li><%= l.subject %> - <%= l.date.toDateString() %> - <%= l.status %></li><% }); %></ul>
+<%- include('../partials/footer') %>

@@ -1,0 +1,14 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Student Count Reports (All Schools)</h1>
+<form method="get" class="filter-form">
+    <div class="filter-group"><label>School</label><select name="schoolId"><option value="">All</option><% schools.forEach(s => { %><option value="<%= s._id %>" <%= selectedSchool == s._id ? 'selected' : '' %>><%= s.name %></option><% }); %></select></div>
+    <div class="filter-group"><label>Start Date</label><input type="date" name="startDate" value="<%= startDate %>"></div>
+    <div class="filter-group"><label>End Date</label><input type="date" name="endDate" value="<%= endDate %>"></div>
+    <button type="submit" class="btn">Filter</button>
+</form>
+<table class="data-table"><thead><tr><th>School</th><th>Teacher</th><th>Date</th><th>Time</th><th>Student Count</th><th>Image</th></tr></thead>
+<tbody><% studentData.forEach(item => { item.records.forEach(r => { %>
+<tr><td><%= item.school %></td><td><%= item.teacher %></td><td><%= r.date %></td><td><%= r.time %></td><td><%= r.studentCount %></td><td><a href="<%= r.imageUrl %>" target="_blank">View</a></td></tr>
+<% }); }); %></tbody></table>
+<%- include('../partials/footer') %>

@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<h1>Welcome, <%= student.name %></h1>
+<div class="stats-grid">
+    <div class="stat-card">Class: <%= student.class %></div>
+    <div class="stat-card">Roll No: <%= student.rollNumber %></div>
+</div>
+<h2>Recent Attendance</h2>
+<table class="data-table">
+    <thead><tr><th>Date</th><th>Status</th></tr></thead>
+    <tbody>
+        <% attendance.slice(0,5).forEach(a => { %>
+        <tr><td><%= a.date %></td><td><%= a.status %></td></tr>
+        <% }); %>
+    </tbody>
+</table>
+<h2>Recent Results</h2>
+<table class="data-table">
+    <thead><tr><th>Exam</th><th>Subject</th><th>Marks</th><th>Percentage</th></tr></thead>
+    <tbody>
+        <% academics.slice(0,5).forEach(a => { %>
+        <tr><td><%= a.examName %></td><td><%= a.subject %></td><td><%= a.marksObtained %>/<%= a.maxMarks %></td><td><%= a.percentage %>%</td></tr>
+        <% }); %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

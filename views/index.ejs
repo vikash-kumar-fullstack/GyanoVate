@@ -1,78 +1,266 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title || 'Lecture Recording System' %></title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <%- include('partials/header') %>
-    
-    <div class="container">
-        <div class="hero">
-            <h1>Lecture Recording & Analysis System</h1>
-            <p>Advanced platform for lecture recording, AI-powered transcription, and educational content analysis</p>
-            
-            <% if (!locals.teacher) { %>
-                <div class="auth-buttons">
-                    <a href="/auth/login" class="btn btn-primary">Teacher Login</a>
-                    <a href="/auth/register" class="btn btn-secondary">Teacher Registration</a>
-                </div>
-            <% } else { %>
-                <div class="dashboard-link">
-                    <a href="<%= locals.teacher.role === 'admin' ? '/admin/dashboard' : '/teacher/dashboard' %>" 
-                       class="btn btn-primary">
-                        Go to Dashboard
-                    </a>
-                </div>
-            <% } %>
-        </div>
 
-        <div class="features">
-            <div class="feature-card">
-                <h3>🕒 Automatic Scheduling</h3>
-                <p>Lectures automatically enable at scheduled times with real-time notifications</p>
-            </div>
-            <div class="feature-card">
-                <h3>🎙️ AI-Powered Transcription</h3>
-                <p>Advanced speech-to-text transcription with human voice detection</p>
-            </div>
-            <div class="feature-card">
-                <h3>🤖 Intelligent Analysis</h3>
-                <p>AI-powered content matching and educational effectiveness analysis</p>
-            </div>
-            <div class="feature-card">
-                <h3>📊 Detailed Analytics</h3>
-                <p>Comprehensive reports on teaching performance and content coverage</p>
-            </div>
-            <div class="feature-card">
-                <h3>🔒 Secure Storage</h3>
-                <p>All recordings and transcripts securely stored in MongoDB database</p>
-            </div>
-            <div class="feature-card">
-                <h3>📱 Responsive Design</h3>
-                <p>Works perfectly on desktop, tablet, and mobile devices</p>
-            </div>
-        </div>
 
-        <% if (!locals.teacher) { %>
-        <div class="form-container">
-            <h2>System Overview</h2>
-            <p>This system helps teachers practice and deliver lectures effectively by:</p>
-            <ul>
-                <li>Automatically scheduling recording sessions</li>
-                <li>Transcribing lectures in real-time</li>
-                <li>Comparing with reference materials using AI</li>
-                <li>Providing detailed analysis and feedback</li>
-                <li>Tracking progress over time</li>
-            </ul>
-        </div>
-        <% } %>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: #0a0a0a;
+    overflow-x: hidden;
+  }
+
+  /* Particle Canvas */
+  #particles-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .hero-wrapper {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .hero-content {
+    max-width: 1000px;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 8px 24px;
+    background: rgba(0, 180, 219, 0.15);
+    border: 1px solid rgba(0, 180, 219, 0.3);
+    border-radius: 50px;
+    color: #00b4db;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    margin-bottom: 25px;
+    animation: fadeInDown 0.8s ease-out;
+  }
+
+  .hero-title {
+    font-size: 5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 15px;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.4rem;
+    color: #a0a0a0;
+    margin-bottom: 8px;
+    font-weight: 300;
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+  }
+
+  .hero-description {
+    font-size: 1.1rem;
+    color: #707070;
+    margin-bottom: 40px;
+    animation: fadeInUp 0.8s ease-out 0.6s both;
+  }
+
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 45px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+    border: none;
+    border-radius: 50px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 30px rgba(0, 180, 219, 0.5);
+    transition: transform 0.3s, box-shadow 0.3s;
+    animation: fadeInUp 0.8s ease-out 0.8s both;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 50px rgba(0, 180, 219, 0.8);
+  }
+
+  .feature-grid {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 60px;
+    flex-wrap: wrap;
+    animation: fadeInUp 0.8s ease-out 1s both;
+  }
+
+  .feature-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 30px 25px;
+    width: 220px;
+    text-align: center;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(0, 180, 219, 0.5);
+  }
+
+  .feature-card i {
+    font-size: 2.5rem;
+    color: #00b4db;
+    margin-bottom: 15px;
+  }
+
+  .feature-card h4 {
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  .feature-card p {
+    color: #888;
+    font-size: 0.9rem;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .hero-title { font-size: 3rem; }
+    .feature-grid { gap: 15px; }
+    .feature-card { width: 160px; }
+  }
+</style>
+
+<canvas id="particles-canvas"></canvas>
+
+<div class="hero-wrapper">
+  <div class="hero-content">
+    <div class="hero-badge">🚀 AI-Powered Platform</div>
+    <h1 class="hero-title">Teach<span>With</span>Tech</h1>
+    <p class="hero-subtitle">Real‑time Education Monitoring & Analytics</p>
+    <p class="hero-description">Transparency • Accountability • Quality</p>
+    <a href="/auth/login" class="cta-button">
+      <i class="fas fa-rocket"></i> Launch Dashboard
+    </a>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <i class="fas fa-brain"></i>
+        <h4>AI Analysis</h4>
+        <p>Deep insights into every lecture</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-chart-bar"></i>
+        <h4>Live Metrics</h4>
+        <p>Attendance, content match & more</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-lock"></i>
+        <h4>Secure</h4>
+        <p>Role‑based access for all stakeholders</p>
+      </div>
     </div>
+  </div>
+</div>
 
-    <%- include('partials/footer') %>
-    
-    <script src="/js/schedule.js"></script>
-</body>
-</html>
+<script>
+  // Particle network animation
+  const canvas = document.getElementById('particles-canvas');
+  const ctx = canvas.getContext('2d');
+  let width, height, particles;
+
+  function init() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    particles = [];
+    const count = 80;
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 2 + 1,
+        color: `rgba(0, 180, 219, ${Math.random() * 0.5 + 0.2})`
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0 || p.x > width) p.vx *= -1;
+      if (p.y < 0 || p.y > height) p.vy *= -1;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    });
+
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(0, 180, 219, ${0.1 * (1 - dist / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', init);
+  init();
+  draw();
+</script>
+

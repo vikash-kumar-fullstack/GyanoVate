@@ -1,158 +1,201 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Lecture System</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <style>
-        .recording-container {
-            max-width: 800px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        
-        .timer {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #007bff;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .recording-controls {
-            margin: 30px 0;
-        }
-        
-        .recording-btn {
-            font-size: 1.2rem;
-            padding: 15px 30px;
-            margin: 0 10px;
-            min-width: 160px;
-        }
-        
-        .status-ready { color: #28a745; }
-        .status-recording { color: #dc3545; }
-        .status-processing { color: #ffc107; }
-        
-        #recordingProgress {
-            height: 10px;
-            background: #007bff;
-            border-radius: 10px;
-            width: 0%;
-            transition: width 1s;
-        }
-        
-        .visualizer {
-            width: 100%;
-            height: 100px;
-            margin: 20px 0;
-            background: #f8f9fa;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        .audio-wave {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-        }
-        
-        .bar {
-            width: 3px;
-            background: #007bff;
-            border-radius: 2px;
-            transition: height 0.1s ease;
-        }
-    </style>
-</head>
-<body>
-    <%- include('../partials/header') %>
-    
-    <div class="container">
-        <div class="recording-container">
-            <h1>Lecture Recording</h1>
-            <h2><%= lecture.title %></h2>
-            <div class="meta" style="margin-bottom: 30px;">
-                <p><strong>Subject:</strong> <%= lecture.subject %> | <strong>Class:</strong> <%= lecture.class %></p>
-                <p><strong>Scheduled Time:</strong> <%= lecture.schedule.startTime %> - <%= lecture.schedule.endTime %></p>
-                <p><strong>Reference Material:</strong> <%= lecture.youtubeVideo?.url ? 'Available' : 'Not provided' %></p>
-            </div>
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
 
-            <input type="hidden" id="lectureId" value="<%= lecture._id %>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-            <!-- Recording Status -->
-            <div id="statusIndicator" class="alert alert-info">
-                Ready to start recording. Click Start when ready.
-            </div>
+<style>
+  .recording-container {
+    max-width: 600px;
+    margin: 30px auto;
+  }
+  .recording-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  .lecture-title {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 5px;
+  }
+  .lecture-sub {
+    color: #7f8c8d;
+    margin-bottom: 25px;
+    font-size: 0.95rem;
+  }
 
-            <!-- Timer Display -->
-            <div class="timer" id="timer">00:00:00</div>
+  .timer {
+    font-size: 4rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: #2c3e50;
+    background: #f8f9fa;
+    display: inline-block;
+    padding: 15px 30px;
+    border-radius: 50px;
+    letter-spacing: 4px;
+    margin-bottom: 30px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+  }
 
-            <!-- Audio Visualizer -->
-            <div class="visualizer" id="visualizer" style="display: none;">
-                <div class="audio-wave" id="audioWave"></div>
-            </div>
+  .controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 25px;
+  }
+  .btn-rec {
+    border: none;
+    padding: 14px 35px;
+    border-radius: 50px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .btn-rec:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  }
+  .btn-start {
+    background: #27ae60;
+    color: white;
+  }
+  .btn-start:hover {
+    background: #219a52;
+  }
+  .btn-stop {
+    background: #e74c3c;
+    color: white;
+  }
+  .btn-stop:hover {
+    background: #c0392b;
+  }
+  .btn-rec:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .btn-rec i {
+    font-size: 1.1rem;
+  }
 
-            <!-- Progress Bar -->
-            <div style="width: 100%; background: #e9ecef; border-radius: 10px; margin: 20px 0;">
-                <div id="recordingProgress" style="height: 10px; background: #007bff; border-radius: 10px; width: 0%;"></div>
-            </div>
+  audio {
+    width: 100%;
+    margin-top: 15px;
+    border-radius: 30px;
+  }
 
-            <!-- Recording Controls -->
-            <div class="recording-controls">
-                <button id="startRecording" class="btn btn-success recording-btn">
-                    🎤 Start Recording
-                </button>
-                <button id="stopRecording" class="btn btn-danger recording-btn" disabled>
-                    ⏹️ Stop Recording
-                </button>
-            </div>
+  .pulse {
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+  }
+</style>
 
-            <!-- Status Text -->
-            <div id="recordingStatus" class="status-ready" style="font-size: 1.2rem; font-weight: bold;">
-                Ready to record
-            </div>
-
-            <!-- Real-time Transcript -->
-            <div id="transcriptContainer" style="display: none; margin-top: 30px;">
-                <h3>Live Transcript</h3>
-                <div id="liveTranscript" style="
-                    background: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 10px;
-                    min-height: 100px;
-                    max-height: 300px;
-                    overflow-y: auto;
-                    text-align: left;
-                    white-space: pre-wrap;
-                "></div>
-            </div>
-
-            <!-- Instructions -->
-            <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-                <h3>📋 Recording Instructions</h3>
-                <ul style="text-align: left; margin: 15px 0;">
-                    <li>Ensure you have a stable internet connection</li>
-                    <li>Use a good quality microphone for better transcription</li>
-                    <li>Speak clearly and at a moderate pace</li>
-                    <li>Recording will automatically stop after 1 hour</li>
-                    <li>You can stop recording anytime by clicking the stop button</li>
-                    <li>Analysis will begin automatically after recording stops</li>
-                </ul>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin-top: 30px;">
-            <a href="/teacher/dashboard" class="btn btn-secondary">Back to Dashboard</a>
-        </div>
+<div class="recording-container">
+  <div class="recording-card">
+    <h1 class="lecture-title"><i class="fas fa-microphone-alt"></i> <%= lecture.title %></h1>
+    <div class="lecture-sub">
+      <%= lecture.subject %> | Class <%= lecture.classNum %>
     </div>
 
-    <%- include('../partials/footer') %>
-    
-    <script src="/js/recording.js"></script>
-</body>
-</html>
+    <div class="timer" id="timer">00:00</div>
+
+    <div class="controls">
+      <button id="startBtn" class="btn-rec btn-start">
+        <i class="fas fa-circle"></i> Start Recording
+      </button>
+      <button id="stopBtn" class="btn-rec btn-stop" disabled>
+        <i class="fas fa-stop"></i> Stop Recording
+      </button>
+    </div>
+
+    <audio id="audioPlayback" controls style="display:none;"></audio>
+  </div>
+</div>
+
+<script>
+  let mediaRecorder, audioChunks = [], startTime, timerInterval;
+  const startBtn = document.getElementById('startBtn'),
+        stopBtn  = document.getElementById('stopBtn'),
+        timerDiv = document.getElementById('timer'),
+        audioPlayback = document.getElementById('audioPlayback');
+
+  startBtn.onclick = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+    mediaRecorder.onstop = async () => {
+      clearInterval(timerInterval);
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const formData = new FormData();
+      formData.append('audio', blob);
+
+      try {
+        const uploadRes = await fetch('/upload/audio', { method: 'POST', body: formData });
+        const uploadData = await uploadRes.json();
+        if (uploadData.success) {
+          await fetch(`/recording/stop/<%= lecture._id %>`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              audioUrl: uploadData.audioUrl,
+              filename: uploadData.filename,
+              duration: Math.floor((Date.now() - startTime) / 1000)
+            })
+          });
+          audioPlayback.src = uploadData.audioUrl;
+          audioPlayback.style.display = 'block';
+        } else {
+          alert('Upload failed');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error during upload');
+      } finally {
+        stream.getTracks().forEach(t => t.stop());
+        // 👇 Redirect to teacher dashboard after a short delay
+        setTimeout(() => {
+          window.location.href = '/teacher/dashboard';
+        }, 1500);
+      }
+    };
+
+    mediaRecorder.start();
+    startTime = Date.now();
+
+    timerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      timerDiv.innerText = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
+    }, 1000);
+
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    startBtn.innerHTML = '<i class="fas fa-circle pulse"></i> Recording...';
+
+    await fetch(`/recording/start/<%= lecture._id %>`, { method: 'POST' });
+  };
+
+  stopBtn.onclick = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      // The redirect will happen inside mediaRecorder.onstop
+    }
+  };
+</script>
+
+<%- include('../partials/footer') %>
